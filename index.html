@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <title>atlasz — AI-powered logistics</title>
+    <meta
+      name="description"
+      content="atlasz — AI-powered logistics. Join the early access list."
+    />
+    <script>
+      // Default to dark; the site is dark-first and matches the atlasz app.
+      (function () {
+        try {
+          var t = localStorage.getItem('atlasz-theme') || 'dark';
+          var isDark =
+            t === 'system'
+              ? window.matchMedia('(prefers-color-scheme: dark)').matches
+              : t === 'dark';
+          if (isDark) document.documentElement.classList.add('dark');
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

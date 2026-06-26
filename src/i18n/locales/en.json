@@ -1,0 +1,326 @@
+{
+  "language": {
+    "en": "English",
+    "hu": "Magyar",
+    "switch": "Change language"
+  },
+  "hero": {
+    "badge": "Early access",
+    "titleLine1": "AI powered",
+    "titleLine2": "Transport Management System.",
+    "subtitle": "atlasz brings your fleet, routes, and freight into one intelligent workspace. Answer a few quick questions and we'll be in touch.",
+    "cta": "Take atlasz for a test drive"
+  },
+  "features": {
+    "eyebrow": "What atlasz does",
+    "heading": "Everything your fleet needs, in one place.",
+    "intro": "From planning the first route to invoicing the last delivery, atlasz handles the whole journey.",
+    "items": {
+      "capture": {
+        "title": "AI document capture",
+        "description": "Forward an email, drop in a PDF or paste a message — atlasz reads it and creates the records for you, like transport tasks, with no manual data entry."
+      },
+      "tracking": {
+        "title": "Live fleet tracking",
+        "description": "See every vehicle on one map in real time, with arrival estimates that update as conditions change."
+      },
+      "shipments": {
+        "title": "Shipment management",
+        "description": "Track freight from pickup to delivery with required times and locations captured at every stop."
+      },
+      "mobile": {
+        "title": "iOS & Android app",
+        "description": "Take atlasz anywhere — scan documents, message your colleagues and drivers, and handle the day's admin straight from your phone."
+      },
+      "invoicing": {
+        "title": "Invoicing",
+        "description": "Create invoices from delivered transports right inside atlasz — your billing stays where the work happens."
+      },
+      "profitability": {
+        "title": "Route profitability",
+        "description": "See the profit on every route — atlasz totals fuel, tolls and other costs against the income, so you know what each trip earns before it runs."
+      }
+    }
+  },
+  "routeEconomics": {
+    "tablist": "atlasz feature showcase",
+    "leads": {
+      "economics": {
+        "eyebrow": "Route economics",
+        "heading": "Know what every route really earns.",
+        "subtitle": "atlasz nets fuel, tolls, driver pay and the rest against the income on each trip — so the margin is never a guess."
+      },
+      "chat": {
+        "eyebrow": "AI assistant",
+        "heading": "Run your operation by just asking.",
+        "subtitle": "Ask atlasz in plain language — it reads your data, drafts the paperwork and acts on it, with you approving each step."
+      },
+      "capture": {
+        "eyebrow": "Document capture",
+        "heading": "From inbox to transport task in seconds.",
+        "subtitle": "Forward an email or drop in a PDF — atlasz reads it and builds the transport task for you, with no manual data entry."
+      }
+    },
+    "period": "This week",
+    "income": "Income",
+    "cost": "Cost",
+    "profit": "Profit",
+    "margin": "margin",
+    "costs": {
+      "fuel": "Fuel",
+      "tolls": "Tolls",
+      "driver": "Driver",
+      "other": "Other"
+    },
+    "tabs": {
+      "economics": "Cost & income per route",
+      "chat": "AI assistant",
+      "capture": "Document capture"
+    },
+    "chat": {
+      "u1": "Which routes made the least profit this week?",
+      "a1": "Debrecen → Kraków had the thinnest margin — 29% (€630 on €2,180). Fuel ran high at €690. Want me to compare it with last week?",
+      "u2": "Yes — and draft the invoice for Szeged → Munich.",
+      "a2": "Done. Here's the draft, generated from the delivered transport:",
+      "cardTitle": "Invoice #1043 · Szeged → Munich",
+      "cardBadge": "Needs review",
+      "cardSummary": "€3,100 · payable in 14 days · 33% margin",
+      "review": "Review",
+      "approve": "Approve",
+      "placeholder": "Ask atlasz about your fleet…",
+      "send": "Send"
+    },
+    "capture": {
+      "fileName": "transport-order-SO-4471.pdf",
+      "fileMeta": "PDF · 142 KB",
+      "uploaded": "Uploaded",
+      "preview": "“Collect 12 pallets (refrigerated, 8.4 t) in Budapest, Mon 09:00 — deliver to Vienna by Mon 17:00. Ref SO-4471.”",
+      "taskTitle": "New transport task",
+      "created": "Created",
+      "fields": {
+        "reference": { "label": "Reference", "value": "SO-4471" },
+        "pickup": { "label": "Pickup", "value": "Budapest, HU · Mon 09:00" },
+        "delivery": { "label": "Delivery", "value": "Vienna, AT · Mon 17:00" },
+        "cargo": { "label": "Cargo", "value": "12 pallets · refrigerated" },
+        "weight": { "label": "Weight", "value": "8.4 t" }
+      }
+    }
+  },
+  "integrations": {
+    "eyebrow": "Integrations",
+    "heading": "Plugs into the tools you already use.",
+    "intro": "atlasz layers on top of the systems your operation already runs on — bring your own accounts and let data flow in automatically. No rip-and-replace, no double entry.",
+    "partners": {
+      "eurowag": {
+        "name": "Eurowag",
+        "category": "Fuel & toll cards",
+        "description": "Pull fuel, toll and mobility transactions from Eurowag straight into atlasz for accurate, per-trip cost tracking."
+      },
+      "mobilecms": {
+        "name": "Mobile CMS",
+        "category": "Telematics & tracking",
+        "description": "Bring live vehicle positions and trip data from Mobile CMS into atlasz, so your fleet stays on the map in real time."
+      },
+      "webeye": {
+        "name": "WebEye",
+        "category": "Telematics & tracking",
+        "description": "Feed GPS positions, trips and tachograph data from WebEye into atlasz for real-time tracking and compliance."
+      }
+    },
+    "moreLead": "And connects with the rest of your stack:",
+    "categories": {
+      "telematics": "Telematics & GPS",
+      "accounting": "Accounting & invoicing",
+      "tachograph": "Tachograph & compliance",
+      "fuel": "Fuel & toll cards",
+      "loadboards": "Load boards",
+      "more": "+ more"
+    }
+  },
+  "references": {
+    "eyebrow": "References",
+    "heading": "Trusted by transport companies.",
+    "intro": "Operators across Europe rely on atlasz to run their day-to-day logistics.",
+    "companies": {
+      "gfl": {
+        "name": "General Frigolog",
+        "category": "Refrigerated & special transport",
+        "description": "Refrigerated, standard and oversized road transport with Europe-wide forwarding and warehouse logistics.",
+        "link": "Visit website"
+      }
+    }
+  },
+  "onboarding": {
+    "eyebrow": "Migration & onboarding",
+    "heading": "We migrate your data and onboard you to AI.",
+    "intro": "Switching systems is the hard part — so we handle it for you. Our team moves your existing data into atlasz and gets your people comfortable working with AI, every step of the way.",
+    "steps": {
+      "import": {
+        "title": "We migrate your data",
+        "description": "Bring your spreadsheets, exports or current system — we move your vehicles, drivers, partners and history into atlasz, cleaned up and ready to use."
+      },
+      "assist": {
+        "title": "We onboard you to AI",
+        "description": "We show your team how to get the most from the AI assistant — from planning routes to answering questions — so it becomes a natural part of how they work."
+      },
+      "live": {
+        "title": "We stay with you",
+        "description": "Hands-on support through go-live and beyond, so the switch is smooth and your team is productive from day one."
+      }
+    }
+  },
+  "quiz": {
+    "progress": "Question {{current}} of {{total}}",
+    "back": "← Back",
+    "role": {
+      "question": "What best describes you?",
+      "options": {
+        "carrier": "Carrier / fleet operator",
+        "forwarder": "Freight forwarder",
+        "shipper": "Shipper / manufacturer",
+        "other": "Something else"
+      }
+    },
+    "fleet_size": {
+      "question": "How large is your fleet?",
+      "options": {
+        "s1_10": "1–10 vehicles",
+        "s11_50": "11–50 vehicles",
+        "s51_200": "51–200 vehicles",
+        "s200_plus": "200+ vehicles"
+      }
+    },
+    "timeline": {
+      "question": "When are you looking to improve your logistics operations?",
+      "options": {
+        "now": "Right now",
+        "quarter": "This quarter",
+        "year": "This year",
+        "exploring": "Just exploring"
+      }
+    }
+  },
+  "form": {
+    "heading": "Almost there",
+    "subtitle": "Leave your details and our team will reach out personally.",
+    "name": {
+      "label": "Full name",
+      "placeholder": "Jane Doe"
+    },
+    "email": {
+      "label": "Email",
+      "placeholder": "jane@company.com"
+    },
+    "phone": {
+      "label": "Phone number",
+      "hint": "So we can call you.",
+      "placeholder": "+36 20 123 4567"
+    },
+    "gdpr": {
+      "before": "I agree to the processing of my personal data in line with the ",
+      "link": "privacy policy",
+      "after": " (GDPR)."
+    },
+    "marketing": "I'd like to receive product updates and news by email (optional).",
+    "submit": "Subscribe",
+    "submitting": "Submitting…",
+    "errors": {
+      "name": "Please enter your name.",
+      "email": "Please enter a valid email address.",
+      "phone": "Please enter a phone number we can reach you on.",
+      "gdpr": "Please accept the privacy policy to continue.",
+      "generic": "Sign-ups aren't quite live yet — we're putting the finishing touches on it. Please check back soon, or email us and we'll add you ourselves."
+    }
+  },
+  "success": {
+    "heading": "You're on the list",
+    "bodyWithName": "Thanks, {{name}}! We've sent a confirmation to {{email}}. Our team will be in touch shortly.",
+    "body": "Thanks! We've sent a confirmation to {{email}}. Our team will be in touch shortly."
+  },
+  "footer": {
+    "tagline": "AI powered Transport Management System.",
+    "companyHeading": "Company",
+    "links": {
+      "website": "followthepattern.net",
+      "contact": "Contact",
+      "privacy": "Privacy policy"
+    },
+    "rights": "All rights reserved by FOLLOWTHEPATTERN @ {{year}}"
+  },
+  "privacy": {
+    "back": "← Back",
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: {{date}}",
+    "intro": "This policy explains how FOLLOWTHEPATTERN (\"we\", \"us\"), the operator of atlasz, collects and uses your personal data when you sign up through this landing page. We are the data controller for that information.",
+    "controller": {
+      "title": "Data Controller",
+      "name": "FOLLOWTHEPATTERN Kft.",
+      "taxLabel": "Tax number (adószám)",
+      "tax": "32061293-2-03",
+      "countryLabel": "Country",
+      "country": "Hungary",
+      "emailLabel": "Email"
+    },
+    "collect": {
+      "title": "1. Data we collect",
+      "lead": "When you complete the sign-up flow we collect:",
+      "contactLabel": "Contact details",
+      "contact": " you enter: your name, email address and phone number.",
+      "quizLabel": "Quiz answers",
+      "quiz": ": the responses you give about your role, fleet size and timeline, so our team can understand your needs.",
+      "consentLabel": "Consent record",
+      "consent": ": whether you accepted this policy and opted in to marketing, together with the date and time.",
+      "technicalLabel": "Technical data",
+      "technical": ": your IP address and browser user-agent, captured automatically to evidence your consent and protect against abuse."
+    },
+    "use": {
+      "title": "2. Why we use it and our legal basis",
+      "item1before": "To contact you about atlasz and follow up on your interest — on the basis of your ",
+      "item1consent": "consent",
+      "item1after": " (Article 6(1)(a) GDPR), which you give by accepting this policy.",
+      "item2": "To send you product updates and news by email — only if you separately opt in to marketing. Signing up for atlasz never requires marketing consent, and you can unsubscribe at any time by contacting us at {{email}}.",
+      "item3": "To keep a record of your consent and to prevent fraudulent or abusive sign-ups — on the basis of our legitimate interests (Article 6(1)(f) GDPR)."
+    },
+    "share": {
+      "title": "3. Who we share it with",
+      "lead": "We do not sell your personal data. We share it only with service providers who process it on our behalf, under contract and on our instructions:",
+      "scalewayLabel": "Scaleway",
+      "scaleway": " (Scaleway SAS, France) — the cloud provider where we host the website and the application.",
+      "location": "Your data is stored on our servers and processed within the European Union.",
+      "transfers": "Where any processing would involve transferring your data outside the European Economic Area (EEA), we put appropriate safeguards in place, such as the European Commission's Standard Contractual Clauses."
+    },
+    "retention": {
+      "title": "4. How long we keep it",
+      "body": "We keep your details for as long as we are in contact about atlasz, and afterwards only as long as needed to evidence your consent or meet legal obligations. If you ask us to delete your data, we will do so unless we are required to retain it."
+    },
+    "rights": {
+      "title": "5. Your rights",
+      "lead": "Under the GDPR you have the right to:",
+      "access": "access the personal data we hold about you;",
+      "rectify": "have inaccurate data corrected, or incomplete data completed;",
+      "erase": "have your data erased;",
+      "restrict": "restrict or object to how we process your data;",
+      "portability": "receive your data in a portable format;",
+      "withdraw": "withdraw your consent at any time, without affecting processing carried out before you withdrew it;",
+      "complaint": "lodge a complaint with your data protection supervisory authority."
+    },
+    "contact": {
+      "title": "6. Contacting us",
+      "before": "To exercise any of these rights, or for any question about this policy, email us at ",
+      "after": ".",
+      "timing": "We will respond to requests concerning your personal data within one month of receipt, unless a longer period is permitted by law."
+    },
+    "cookies": {
+      "title": "7. Cookies",
+      "body": "This landing page does not use tracking or advertising cookies. We store only a small preference in your browser to remember your light or dark theme."
+    },
+    "children": {
+      "title": "8. Children's data",
+      "body": "atlasz is intended for business users and is not directed to children under the age of 16. We do not knowingly collect personal data from children."
+    },
+    "changes": {
+      "title": "9. Changes to this policy",
+      "body": "We may update this policy from time to time. The date at the top shows when it was last changed."
+    }
+  }
+}

@@ -1,0 +1,78 @@
+name: Deploy website
+
+# Builds the site and syncs the static output to a Scaleway Object Storage
+# bucket (S3-compatible). The deploy job runs in the `prod` GitHub Environment;
+# configure these on that environment (Settings → Environments → prod) before
+# the first run:
+#
+#   Secrets:
+#     SCW_ACCESS_KEY   Scaleway API access key
+#     SCW_SECRET_KEY   Scaleway API secret key
+#
+#   Variables:
+#     SCW_WEBSITE_BUCKET   target bucket name, e.g. atlasz-landing
+#     SCW_REGION           Scaleway region (optional, defaults to fr-par)
+#     VITE_API_BASE_URL    backend origin baked into the build, e.g. https://app.atlasz.eu
+#
+# The bucket must have static website hosting enabled with index.html as the
+# index (and ideally error) document. The site uses hash + query routing, so no
+# SPA rewrite rules are required.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-website
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: prod
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.SCW_ACCESS_KEY }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.SCW_SECRET_KEY }}
+      AWS_DEFAULT_REGION: ${{ vars.SCW_REGION || 'fr-par' }}
+      SCW_ENDPOINT: https://s3.${{ vars.SCW_REGION || 'fr-par' }}.scw.cloud
+      SCW_BUCKET: ${{ vars.SCW_WEBSITE_BUCKET }}
+      VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL || 'https://app.atlasz.eu' }}
+      # Scaleway Object Storage rejects the newer AWS CLI default checksum
+      # trailers; only send them when an operation actually requires one.
+      AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+      AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Check configuration
+        run: |
+          if [ -z "${SCW_BUCKET}" ]; then
+            echo "::error::SCW_WEBSITE_BUCKET variable is not set."
+            exit 1
+          fi
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Sync hashed assets (long cache)
+        run: |
+          aws s3 sync dist/ "s3://${SCW_BUCKET}" \
+            --endpoint-url "${SCW_ENDPOINT}" \
+            --delete \
+            --cache-control "public, max-age=31536000, immutable" \
+            --exclude "index.html"
+
+      - name: Upload index.html (no cache)
+        run: |
+          aws s3 cp dist/index.html "s3://${SCW_BUCKET}/index.html" \
+            --endpoint-url "${SCW_ENDPOINT}" \
+            --cache-control "no-cache" \
+            --content-type "text/html"

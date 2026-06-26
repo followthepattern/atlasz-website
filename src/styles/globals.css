@@ -1,0 +1,136 @@
+@import "tailwindcss";
+
+/* Class-based dark mode toggle. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Semantic theme tokens — copied from the atlasz web app so the landing page
+   matches the product exactly. */
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-hairline: var(--hairline);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-positive: var(--positive);
+  --color-positive-bg: var(--positive-bg);
+  --color-negative: var(--negative);
+  --color-negative-bg: var(--negative-bg);
+}
+
+:root {
+  color-scheme: light;
+  --canvas: #ffffff;
+  --surface: #ffffff;
+  --fg: #09090b;
+  --muted: #71717a;
+  --hairline: rgba(9, 9, 11, 0.1);
+  --accent: #18181b;
+  --accent-fg: #ffffff;
+  --positive: #15803d;
+  --positive-bg: rgba(22, 163, 74, 0.12);
+  --negative: #be185d;
+  --negative-bg: rgba(219, 39, 119, 0.12);
+}
+
+.dark {
+  color-scheme: dark;
+  --canvas: #18181b;
+  --surface: rgba(255, 255, 255, 0.05);
+  --fg: #ffffff;
+  --muted: #a1a1aa;
+  --hairline: rgba(255, 255, 255, 0.1);
+  --accent: #ffffff;
+  --accent-fg: #18181b;
+  --positive: #4ade80;
+  --positive-bg: rgba(74, 222, 128, 0.15);
+  --negative: #f472b6;
+  --negative-bg: rgba(244, 114, 182, 0.15);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--fg);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Match selection + native form-control accents to the theme. */
+::selection {
+  background-color: var(--accent);
+  color: var(--accent-fg);
+}
+
+input,
+select,
+textarea {
+  accent-color: var(--fg);
+}
+
+/* Flowing dash along the hero map's truck corridors. */
+@keyframes route-flow {
+  to {
+    stroke-dashoffset: -280;
+  }
+}
+
+.route-flow {
+  animation: route-flow 6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-flow {
+    animation: none;
+  }
+}
+
+/* Entrance for each new line in the animated chat showcase. */
+@keyframes chat-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.chat-in {
+  animation: chat-in 0.35s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-in {
+    animation: none;
+  }
+}
+
+/* Cross-fade when the showcase slideshow switches tabs. */
+@keyframes tab-fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.tab-fade {
+  animation: tab-fade 0.45s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-fade {
+    animation: none;
+  }
+}
