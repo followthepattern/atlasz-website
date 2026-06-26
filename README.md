@@ -38,26 +38,14 @@ Copy `.env.example` to `.env` and set `VITE_API_BASE_URL` for production builds.
 The build output in `dist/` is fully static.
 
 - **Vercel** — Framework preset: *Vite*, build command `npm run build`, output
-  directory `dist`. Set `VITE_API_BASE_URL` in the project environment variables.
+  directory `dist`. No env var is required if the backend is the default
+  `https://app.atlasz.eu` — `VITE_API_BASE_URL` falls back to it when unset. Set
+  `VITE_API_BASE_URL` only to point at a different backend. Do **not** set it to
+  an empty string in production: empty means same-origin and `POST /api/subscribe`
+  would hit the Vercel domain instead of the backend (empty is for dev only).
 - **S3 (static hosting)** — `npm run build`, then upload `dist/` to the bucket
   (e.g. `aws s3 sync dist/ s3://<bucket> --delete`) with static website hosting
-  enabled. Set `VITE_API_BASE_URL` before building.
-
-- **Scaleway Object Storage (CI)** — `.github/workflows/deploy-website.yml`
-  builds and syncs `dist/` to a Scaleway bucket on every push to `main` that
-  changes `website/` (a path filter keeps it from running for backend/, mobile/
-  or other changes), or via *Run workflow*. Hashed assets get a long immutable
-  cache; `index.html` is served `no-cache`. Configure first:
-
-  | Kind     | Name                 | Purpose                                        |
-  | -------- | -------------------- | ---------------------------------------------- |
-  | Secret   | `SCW_ACCESS_KEY`     | Scaleway API access key                        |
-  | Secret   | `SCW_SECRET_KEY`     | Scaleway API secret key                        |
-  | Variable | `SCW_WEBSITE_BUCKET` | Target bucket name                             |
-  | Variable | `SCW_REGION`         | Scaleway region (optional, default `fr-par`)   |
-  | Variable | `VITE_API_BASE_URL`  | Backend origin baked into the build            |
-
-  The bucket needs static website hosting enabled with `index.html` as the
-  index document.
+  enabled. Set `VITE_API_BASE_URL` before building if the backend differs from
+  the default.
 
 The backend must allow the deployed origin in `ATLASZ_SERVER_ALLOWED_ORIGINS` (CORS).
