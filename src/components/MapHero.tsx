@@ -1,38 +1,11 @@
-// Abstract animated city map for the hero background. Pure SVG: a procedurally
-// generated street network (deterministic, so it's stable across renders) with
-// trucks that travel along route paths, plus fixed, non-interactive info cards.
+// Abstract animated map for the hero background. Pure SVG: a blind map of
+// Europe (country-border outlines, no labels) with trucks that travel along
+// route paths, plus fixed, non-interactive info cards.
+
+import { EUROPE_PATHS } from "./europeMap";
 
 const W = 1440;
 const H = 720;
-
-// Straight grid of vertical + horizontal streets. Cells are deliberately
-// taller than wide (height ≈ 1.35 × width) so the grid reads as upright
-// rectangles rather than squares. Every 4th line is a slightly stronger "mid".
-const CELL_W = 72;
-const CELL_H = 98;
-
-function buildStreets() {
-  const minor: string[] = [];
-  const mid: string[] = [];
-
-  let col = 0;
-  for (let x = -CELL_W; x <= W + CELL_W; x += CELL_W) {
-    const d = `M ${x} -30 L ${x} ${H + 30}`;
-    (col % 4 === 0 ? mid : minor).push(d);
-    col++;
-  }
-
-  let row = 0;
-  for (let y = -CELL_H; y <= H + CELL_H; y += CELL_H) {
-    const d = `M -30 ${y} L ${W + 30} ${y}`;
-    (row % 4 === 0 ? mid : minor).push(d);
-    row++;
-  }
-
-  return { minor, mid };
-}
-
-const STREETS = buildStreets();
 
 // Corridors the trucks travel along (also drawn as faint flowing roads).
 const ROUTES: { id: string; d: string }[] = [
@@ -129,13 +102,9 @@ export function MapHero() {
         preserveAspectRatio="xMidYMid slice"
         fill="none"
       >
-        <g stroke="var(--fg)" strokeOpacity="0.05" strokeWidth="1">
-          {STREETS.minor.map((d, i) => (
-            <path key={i} d={d} />
-          ))}
-        </g>
-        <g stroke="var(--fg)" strokeOpacity="0.09" strokeWidth="1.4">
-          {STREETS.mid.map((d, i) => (
+        {/* Blind map of Europe: country borders as faint lines. */}
+        <g stroke="var(--fg)" strokeOpacity="0.11" strokeWidth="1" strokeLinejoin="round">
+          {EUROPE_PATHS.map((d, i) => (
             <path key={i} d={d} />
           ))}
         </g>
