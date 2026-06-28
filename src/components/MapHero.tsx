@@ -187,7 +187,7 @@ const CARDS: {
   {
     key: "muc",
     anchor: "Munich",
-    off: { x: -196, y: -154 },
+    off: { x: -104, y: 46 },
     className: "hidden xl:block",
     plate: "AI MI 077",
     status: "En route",
