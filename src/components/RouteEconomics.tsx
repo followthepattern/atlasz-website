@@ -10,8 +10,6 @@ type CostKey = "fuel" | "tolls" | "driver" | "other";
 
 interface Route {
   id: string;
-  from: string;
-  to: string;
   income: number;
   fuel: number;
   tolls: number;
@@ -21,10 +19,10 @@ interface Route {
 
 // Mocked operating figures (EUR) for the marketing showcase.
 const ROUTES: Route[] = [
-  { id: "bud-vie", from: "Budapest", to: "Vienna", income: 1850, fuel: 520, tolls: 180, driver: 360, other: 110 },
-  { id: "deb-krk", from: "Debrecen", to: "Kraków", income: 2180, fuel: 690, tolls: 240, driver: 480, other: 140 },
-  { id: "sze-muc", from: "Szeged", to: "Munich", income: 3100, fuel: 880, tolls: 410, driver: 620, other: 170 },
-  { id: "gyo-mil", from: "Győr", to: "Milan", income: 3640, fuel: 1040, tolls: 560, driver: 720, other: 200 },
+  { id: "bud-vie", income: 1850, fuel: 520, tolls: 180, driver: 360, other: 110 },
+  { id: "deb-krk", income: 2180, fuel: 690, tolls: 240, driver: 480, other: 140 },
+  { id: "sze-muc", income: 3100, fuel: 880, tolls: 410, driver: 620, other: 170 },
+  { id: "gyo-mil", income: 3640, fuel: 1040, tolls: 560, driver: 720, other: 200 },
 ];
 
 // Costs render as a ramp on the web app's primary series color (var(--accent)
@@ -37,7 +35,22 @@ const COST_RAMP: { key: CostKey; opacity: number }[] = [
   { key: "other", opacity: 0.24 },
 ];
 
-const money = (n: number) => `€${n.toLocaleString("en-US")}`;
+function money(n: number, language: string) {
+  const isHu = language.startsWith("hu");
+  return new Intl.NumberFormat(isHu ? "hu-HU" : "en-US", {
+    style: "currency",
+    currency: "EUR",
+    currencyDisplay: isHu ? "narrowSymbol" : "symbol",
+    maximumFractionDigits: 0,
+  }).format(n);
+}
+
+function routeName(id: string, t: ReturnType<typeof useTranslation>["t"]) {
+  return {
+    from: t(`routeEconomics.routes.${id}.from`),
+    to: t(`routeEconomics.routes.${id}.to`),
+  };
+}
 
 function totals(r: Route) {
   const cost = r.fuel + r.tolls + r.driver + r.other;
@@ -52,7 +65,7 @@ const CIRC = 2 * Math.PI * R;
 const GAP = 2.5; // px of bare track between wedges
 
 function Donut({ route }: { route: Route }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { cost, profit, margin } = totals(route);
 
   const segments = [
@@ -91,12 +104,15 @@ function Donut({ route }: { route: Route }) {
         ))}
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-2xl font-semibold tabular-nums tracking-tight text-fg">{money(profit)}</span>
+        <span className="text-2xl font-semibold tabular-nums tracking-tight text-fg">{money(profit, i18n.language)}</span>
         <span className="text-xs tabular-nums text-positive">
           {(margin * 100).toFixed(1)}%&nbsp;<span className="text-muted">{t("routeEconomics.margin")}</span>
         </span>
         <span className="sr-only">
-          cost {money(cost)} of {money(route.income)} income
+          {t("routeEconomics.donutSummary", {
+            cost: money(cost, i18n.language),
+            income: money(route.income, i18n.language),
+          })}
         </span>
       </div>
     </div>
@@ -104,10 +120,11 @@ function Donut({ route }: { route: Route }) {
 }
 
 function EconomicsView() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [selId, setSelId] = useState(ROUTES[0].id);
   const sel = ROUTES.find((r) => r.id === selId) ?? ROUTES[0];
   const selTotals = totals(sel);
+  const selectedRouteName = routeName(sel.id, t);
 
   const legend = [
     { key: "profit", value: selTotals.profit, color: "var(--positive)", opacity: 1, label: t("routeEconomics.profit") },
@@ -126,6 +143,7 @@ function EconomicsView() {
       <div className="flex flex-col gap-2">
         {ROUTES.map((r) => {
           const { profit, margin } = totals(r);
+          const name = routeName(r.id, t);
           const selected = r.id === selId;
           return (
             <button
@@ -139,7 +157,7 @@ function EconomicsView() {
             >
               <div className="flex items-center justify-between">
                 <span className="text-sm text-fg">
-                  {r.from} <span className="text-muted">→</span> {r.to}
+                  {name.from} <span className="text-muted">→</span> {name.to}
                 </span>
                 <span className="text-xs tabular-nums text-positive">{Math.round(margin * 100)}%</span>
               </div>
@@ -148,8 +166,8 @@ function EconomicsView() {
                 <span style={{ width: `${(profit / r.income) * 100}%` }} className="bg-positive" />
               </div>
               <div className="flex justify-between text-[11px] tabular-nums text-muted">
-                <span>{money(r.income)}</span>
-                <span className="text-fg">+{money(profit)}</span>
+                <span>{money(r.income, i18n.language)}</span>
+                <span className="text-fg">+{money(profit, i18n.language)}</span>
               </div>
             </button>
           );
@@ -160,11 +178,11 @@ function EconomicsView() {
       <div className="flex flex-col gap-5 rounded-xl border border-hairline bg-canvas/40 p-5">
         <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <span className="text-sm font-medium text-fg">
-            {sel.from} <span className="text-muted">→</span> {sel.to}
+            {selectedRouteName.from} <span className="text-muted">→</span> {selectedRouteName.to}
           </span>
           <span className="text-xs tabular-nums text-muted">
-            {t("routeEconomics.income")} <span className="text-fg">{money(sel.income)}</span> ·{" "}
-            {t("routeEconomics.cost")} <span className="text-fg">{money(selTotals.cost)}</span>
+            {t("routeEconomics.income")} <span className="text-fg">{money(sel.income, i18n.language)}</span> ·{" "}
+            {t("routeEconomics.cost")} <span className="text-fg">{money(selTotals.cost, i18n.language)}</span>
           </span>
         </div>
 
@@ -178,7 +196,7 @@ function EconomicsView() {
                   style={{ backgroundColor: item.color, opacity: item.opacity }}
                 />
                 <span className="text-muted">{item.label}</span>
-                <span className="ml-auto tabular-nums text-fg">{money(item.value)}</span>
+                <span className="ml-auto tabular-nums text-fg">{money(item.value, i18n.language)}</span>
               </li>
             ))}
           </ul>

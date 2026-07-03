@@ -1,4 +1,8 @@
 {
+  "meta": {
+    "title": "atlasz — AI-alapú fuvarmenedzsment-rendszer",
+    "description": "atlasz — AI-alapú fuvarmenedzsment-rendszer. Hozd egyetlen intelligens felületre a flottádat, útvonalaidat és fuvarfeladataidat. Csatlakozz a korai hozzáférési listához."
+  },
   "language": {
     "en": "English",
     "hu": "Magyar",
@@ -7,9 +11,25 @@
   "hero": {
     "badge": "Korai hozzáférés",
     "titleLine1": "AI-alapú",
-    "titleLine2": "fuvarmenedzsment rendszer.",
-    "subtitle": "Az atlasz egyetlen intelligens felületre hozza a flottádat, járataidat és fuvarfeladataidat. Válaszolj néhány rövid kérdésre, és felvesszük veled a kapcsolatot.",
-    "cta": "Indulj el egy próbakörrel"
+    "titleLine2": "fuvarmenedzsment-rendszer.",
+    "subtitle": "Az atlasz egyetlen intelligens felületen fogja össze a flottádat, útvonalaidat és fuvarfeladataidat. Válaszolj néhány rövid kérdésre, és felvesszük veled a kapcsolatot.",
+    "cta": "Próbáld ki az atlaszt"
+  },
+  "mapHero": {
+    "status": {
+      "enRoute": "Úton",
+      "loading": "Rakodás"
+    },
+    "metrics": {
+      "eta": "Érkezés",
+      "cargo": "Rakomány",
+      "speed": "Sebesség"
+    },
+    "metricValues": {
+      "eta": "1 ó 12 p",
+      "cargo": "18,4 t",
+      "speed": "82 km/h"
+    }
   },
   "features": {
     "eyebrow": "Mit tud az atlasz",
@@ -18,7 +38,7 @@
     "items": {
       "capture": {
         "title": "AI-alapú dokumentumfeldolgozás",
-        "description": "Továbbíts egy e-mailt, tölts fel egy PDF-et vagy illessz be egy üzenetet — az atlasz feldolgozza, és manuális adatrögzítés nélkül létrehozza a szükséges adatokat, például a fuvarfeladatokat."
+        "description": "Továbbíts egy e-mailt, tölts fel egy PDF-et vagy illessz be egy üzenetet — az atlasz kiolvassa belőle az adatokat, és manuális adatrögzítés nélkül létrehozza a fuvarfeladatokat."
       },
       "tracking": {
         "title": "Élő flottakövetés",
@@ -30,15 +50,15 @@
       },
       "mobile": {
         "title": "iOS és Android alkalmazás",
-        "description": "Vidd magaddal az atlaszt bárhová — szkennelj dokumentumokat, üzenj a kollégáknak és sofőröknek, és intézd a napi adminisztrációt közvetlenül a telefonodról."
+        "description": "Vidd magaddal az atlaszt bárhová — olvass be dokumentumokat, üzenj a kollégáknak és sofőröknek, és intézd a napi adminisztrációt közvetlenül a telefonodról."
       },
       "invoicing": {
         "title": "Számlázás",
-        "description": "Készíts számlát a teljesített fuvarokból közvetlenül az atlaszban — így a számlázási adatok ott maradnak, ahol a munka történik."
+        "description": "Készíts számlát a teljesített fuvarokból közvetlenül az atlaszban — így a számlázás is ott marad, ahol a munka történik."
       },
       "profitability": {
         "title": "Járatok nyereségessége",
-        "description": "Lásd, mennyit termel egy-egy járat — az atlasz összeveti az üzemanyag-, útdíj- és egyéb költségeket a bevétellel, így már indulás előtt láthatod, mit keresel rajta."
+        "description": "Lásd, mennyit hoz egy-egy járat — az atlasz összeveti az üzemanyag-, útdíj- és egyéb költségeket a bevétellel, így már indulás előtt látod a várható nyereséget."
       }
     }
   },
@@ -47,13 +67,13 @@
     "leads": {
       "economics": {
         "eyebrow": "Járatok gazdaságossága",
-        "heading": "Tudd pontosan, mennyit keresel egy járaton.",
-        "subtitle": "Az atlasz járatonként összeveti a bevételt az üzemanyaggal, útdíjakkal, sofőrköltséggel és egyéb kiadásokkal — így az árrés nem találgatás."
+        "heading": "Tudd pontosan, mennyit hoz egy-egy járat.",
+        "subtitle": "Az atlasz járatonként összeveti a bevételt az üzemanyaggal, útdíjakkal, sofőrbérrel és egyéb kiadásokkal — így az árrés nem találgatás kérdése."
       },
       "chat": {
         "eyebrow": "AI-asszisztens",
-        "heading": "Vezesd a működésed egyszerűen kérdezéssel.",
-        "subtitle": "Kérdezd az atlaszt hétköznapi nyelven — kiolvassa az adataidat, elkészíti a papírmunkát és lépni is tud, miközben minden lépést te hagysz jóvá."
+        "heading": "Irányítsd a működésedet egyszerű kérdésekkel.",
+        "subtitle": "Kérdezd az atlaszt természetes nyelven — kiolvassa az adataidat, elkészíti a papírmunkát, és műveleteket is elvégez, miközben minden lépést te hagysz jóvá."
       },
       "capture": {
         "eyebrow": "Dokumentumfeldolgozás",
@@ -64,29 +84,36 @@
     "period": "Ezen a héten",
     "income": "Bevétel",
     "cost": "Költség",
-    "profit": "Profit",
+    "profit": "Nyereség",
     "margin": "árrés",
     "costs": {
       "fuel": "Üzemanyag",
       "tolls": "Útdíjak",
-      "driver": "Sofőr",
+      "driver": "Sofőrbér",
       "other": "Egyéb"
     },
+    "routes": {
+      "bud-vie": { "from": "Budapest", "to": "Bécs" },
+      "deb-krk": { "from": "Debrecen", "to": "Krakkó" },
+      "sze-muc": { "from": "Szeged", "to": "München" },
+      "gyo-mil": { "from": "Győr", "to": "Milánó" }
+    },
+    "donutSummary": "Költség: {{cost}} a {{income}} bevételből",
     "tabs": {
-      "economics": "Költség és bevétel útvonalanként",
+      "economics": "Költség és bevétel járatonként",
       "chat": "AI-asszisztens",
       "capture": "Dokumentumfeldolgozás"
     },
     "chat": {
-      "u1": "Mely útvonalak hozták a legkevesebb nyereséget ezen a héten?",
-      "a1": "A Debrecen → Kraków útvonalnak volt a legszűkebb árrése — 29% (€630 a €2 180-ból). Az üzemanyag magas volt: €690. Összehasonlítsam a múlt héttel?",
-      "u2": "Igen — és készítsd el a Szeged → Munich számláját.",
+      "u1": "Mely járatok hozták a legkevesebb nyereséget ezen a héten?",
+      "a1": "A Debrecen → Krakkó járatnak volt a legszűkebb árrése — 29% (630 € a 2 180 €-ból). Az üzemanyagköltség magas volt: 690 €. Összehasonlítsam a múlt héttel?",
+      "u2": "Igen — és készítsd el a Szeged → München számláját.",
       "a2": "Kész. Itt a tervezet, a teljesített fuvar alapján:",
-      "cardTitle": "Számla #1043 · Szeged → Munich",
+      "cardTitle": "1043-as számla · Szeged → München",
       "cardBadge": "Ellenőrzésre vár",
-      "cardSummary": "€3 100 · 14 napon belül fizetendő · 33% árrés",
-      "review": "Áttekintés",
-      "approve": "Jóváhagyás",
+      "cardSummary": "3 100 € · 14 napon belül fizetendő · 33% árrés",
+      "review": "Átnézem",
+      "approve": "Jóváhagyom",
       "placeholder": "Kérdezd az atlaszt a flottádról…",
       "send": "Küldés"
     },
@@ -94,7 +121,7 @@
       "fileName": "fuvarmegrendeles-SO-4471.pdf",
       "fileMeta": "PDF · 142 KB",
       "uploaded": "Feltöltve",
-      "preview": "„Vegyél fel 12 raklapot (hűtött, 8,4 t) Budapesten hétfőn 09:00-kor — szállítsd Bécsbe hétfő 17:00-ig. Hiv. SO-4471.”",
+      "preview": "„12 raklap (hűtött, 8,4 t) felrakása Budapesten, hétfő 09:00 — lerakás Bécsben, hétfő 17:00-ig. Hiv. SO-4471.”",
       "taskTitle": "Új fuvarfeladat",
       "created": "Létrehozva",
       "fields": {
@@ -103,12 +130,12 @@
           "value": "SO-4471"
         },
         "pickup": {
-          "label": "Felvétel",
-          "value": "Budapest, HU · H 09:00"
+          "label": "Felrakás",
+          "value": "Budapest, HU · hétfő 09:00"
         },
         "delivery": {
-          "label": "Kiszállítás",
-          "value": "Vienna, AT · H 17:00"
+          "label": "Lerakás",
+          "value": "Bécs, AT · hétfő 17:00"
         },
         "cargo": {
           "label": "Rakomány",
@@ -123,13 +150,13 @@
   },
   "integrations": {
     "eyebrow": "Integrációk",
-    "heading": "Kapcsolódik azokhoz az eszközökhöz, amelyeket már használsz.",
-    "intro": "Az atlasz ráépül a meglévő rendszereidre — hozd a saját fiókjaidat, és az adatok automatikusan beáramlanak. Nem kell mindent lecserélni, és nincs dupla adatrögzítés.",
+    "heading": "Kapcsolódik a már használt eszközeidhez.",
+    "intro": "Az atlasz ráépül a meglévő rendszereidre — kapcsold hozzá a saját fiókjaidat, és az adatok automatikusan áramlanak. Nem kell rendszert cserélned, és nincs dupla adatrögzítés.",
     "partners": {
       "eurowag": {
         "name": "Eurowag",
         "category": "Üzemanyag- és útdíjkártyák",
-        "description": "Húzd be az üzemanyag-, útdíj- és mobilitási tranzakciókat az Eurowagból közvetlenül az atlaszba, pontos járatonkénti költségkövetéshez."
+        "description": "Hozd be az Eurowag üzemanyag-, útdíj- és mobilitási tranzakcióit közvetlenül az atlaszba a pontos, járatonkénti költségkövetéshez."
       },
       "mobilecms": {
         "name": "Mobile CMS",
@@ -139,14 +166,14 @@
       "webeye": {
         "name": "WebEye",
         "category": "Telematika és nyomkövetés",
-        "description": "Húzd be a GPS-pozíciókat, járatokat és tachográf adatokat a WebEye-ból az atlaszba valós idejű nyomkövetéshez és megfelelőséghez."
+        "description": "Hozd be a GPS-pozíciókat, járatokat és tachográfadatokat a WebEye-ból az atlaszba valós idejű nyomkövetéshez és megfeleléshez."
       }
     },
     "moreLead": "És kapcsolódik a többi rendszeredhez is:",
     "categories": {
       "telematics": "Telematika és GPS",
       "accounting": "Könyvelés és számlázás",
-      "tachograph": "Tachográf és megfelelőség",
+      "tachograph": "Tachográf és megfelelés",
       "fuel": "Üzemanyag- és útdíjkártyák",
       "loadboards": "Fuvarbörzék",
       "more": "+ továbbiak"
@@ -154,29 +181,29 @@
   },
   "references": {
     "eyebrow": "Referenciák",
-    "heading": "Fuvarozó cégek bizalmával.",
-    "intro": "Európai fuvarozó és logisztikai cégek használják az atlaszt a mindennapi működésük támogatására.",
+    "heading": "Fuvarozó cégek bíznak benne.",
+    "intro": "Európa-szerte fuvarozó és logisztikai cégek használják az atlaszt a mindennapi működésük támogatására.",
     "companies": {
       "gfl": {
         "name": "General Frigolog",
-        "category": "Hűtős és speciális fuvarozás",
-        "description": "Hűtős, normál és túlméretes közúti fuvarozás, Európa-szintű szállítmányozással és raktárlogisztikával.",
+        "category": "Hűtött és speciális fuvarozás",
+        "description": "Hűtött, normál és túlméretes közúti fuvarozás Európa-szerte, szállítmányozással és raktárlogisztikával.",
         "link": "Weboldal megnyitása"
       }
     }
   },
   "onboarding": {
-    "eyebrow": "Adatátvétel és bevezetés",
-    "heading": "Átköltöztetjük az adataidat, és segítünk bevezetni az AI-t.",
-    "intro": "A rendszerváltás a legnehezebb rész — ezért ezt levesszük a válladról. Áthozzuk meglévő adataidat az atlaszba, és lépésről lépésre segítünk, hogy a csapatod magabiztosan használja az AI-t a mindennapi munkában.",
+    "eyebrow": "Adatmigráció és bevezetés",
+    "heading": "Átvisszük az adataidat, és segítünk az AI bevezetésében.",
+    "intro": "A rendszercsere a legnehezebb rész — ezért ezt levesszük a válladról. Áthozzuk a meglévő adataidat az atlaszba, és lépésről lépésre segítünk, hogy a csapatod magabiztosan használja az AI-t a mindennapi munkában.",
     "steps": {
       "import": {
-        "title": "Átköltöztetjük az adataidat",
-        "description": "Hozd a táblázataidat, exportjaidat vagy jelenlegi rendszeredet — mi átvisszük a járműveket, sofőröket, partnereket és előzményeket az atlaszba, rendszerezett és használatra kész formában."
+        "title": "Átvisszük az adataidat",
+        "description": "Hozd a táblázataidat, exportjaidat vagy a jelenlegi rendszeredet — mi átvisszük a járműveket, sofőröket, partnereket és előzményeket az atlaszba, rendezetten és használatra kész állapotban."
       },
       "assist": {
-        "title": "Bevezetünk az AI használatába",
-        "description": "Megmutatjuk a csapatodnak, hogyan hozhatja ki a legtöbbet az AI-asszisztensből — a járatok tervezésétől a kérdések megválaszolásáig — hogy természetes része legyen a napi munkának."
+        "title": "Segítünk az AI használatában",
+        "description": "Megmutatjuk a csapatodnak, hogyan hozhatja ki a legtöbbet az AI-asszisztensből — a járatok tervezésétől a kérdések megválaszolásáig — hogy az AI természetes része legyen a napi munkának."
       },
       "live": {
         "title": "Az indulás után is veled maradunk",
@@ -188,9 +215,9 @@
     "progress": "{{current}} / {{total}} kérdés",
     "back": "← Vissza",
     "role": {
-      "question": "Melyik ír le legjobban?",
+      "question": "Melyik jellemzi legjobban?",
       "options": {
-        "carrier": "Fuvarozó / flottakezelő",
+        "carrier": "Fuvarozó / flottaüzemeltető",
         "forwarder": "Szállítmányozó",
         "shipper": "Megbízó / gyártó",
         "other": "Egyéb"
@@ -217,7 +244,7 @@
   },
   "form": {
     "heading": "Már csak egy lépés",
-    "subtitle": "Add meg az elérhetőségeidet, és személyesen felvesszük veled a kapcsolatot.",
+    "subtitle": "Add meg az elérhetőségeidet, és csapatunk személyesen felveszi veled a kapcsolatot.",
     "name": {
       "label": "Teljes név",
       "placeholder": "Kovács Anna"
@@ -228,7 +255,7 @@
     },
     "phone": {
       "label": "Telefonszám",
-      "hint": "Hogy fel tudjunk hívni.",
+      "hint": "Hogy felhívhassunk.",
       "placeholder": "+36 20 123 4567"
     },
     "gdpr": {
@@ -244,7 +271,7 @@
       "email": "Kérlek, adj meg egy érvényes e-mail címet.",
       "phone": "Kérlek, adj meg egy telefonszámot, amelyen elérhetünk.",
       "gdpr": "A folytatáshoz kérlek, fogadd el az adatvédelmi tájékoztatót.",
-      "generic": "A feliratkozás még nem teljesen él — épp az utolsó simításokat végezzük rajta. Nézz vissza hamarosan, vagy írj nekünk, és mi felveszünk a listára."
+      "generic": "A feliratkozás még nem éles — épp az utolsó simításokat végezzük rajta. Nézz vissza hamarosan, vagy írj nekünk, és felveszünk a listára."
     }
   },
   "success": {
@@ -253,20 +280,20 @@
     "body": "Köszönjük! A visszaigazolást elküldtük erre az e-mail címre: {{email}}. Hamarosan felvesszük veled a kapcsolatot."
   },
   "footer": {
-    "tagline": "AI-alapú fuvarmenedzsment rendszer.",
+    "tagline": "AI-alapú fuvarmenedzsment-rendszer.",
     "companyHeading": "Cég",
     "links": {
       "website": "followthepattern.net",
       "contact": "Kapcsolat",
       "privacy": "Adatvédelmi tájékoztató"
     },
-    "rights": "Minden jog fenntartva: FOLLOWTHEPATTERN @ {{year}}"
+    "rights": "Minden jog fenntartva. FOLLOWTHEPATTERN @ {{year}}"
   },
   "privacy": {
     "back": "← Vissza",
     "title": "Adatvédelmi tájékoztató",
     "lastUpdated": "Utolsó frissítés: {{date}}",
-    "intro": "Ez a tájékoztató bemutatja, hogy az atlasz üzemeltetője, a FOLLOWTHEPATTERN (\"mi\", \"minket\"), hogyan gyűjti és használja a személyes adataidat, amikor ezen a landing oldalon keresztül feliratkozol. Ezeknek az adatoknak az adatkezelője mi vagyunk.",
+    "intro": "Ez a tájékoztató bemutatja, hogyan gyűjti és használja az atlasz üzemeltetője, a FOLLOWTHEPATTERN (\"mi\"), a személyes adataidat, amikor ezen a weboldalon keresztül feliratkozol. Az adatok adatkezelője mi vagyunk.",
     "controller": {
       "title": "Adatkezelő",
       "name": "FOLLOWTHEPATTERN Kft.",
@@ -282,25 +309,25 @@
       "contactLabel": "Kapcsolattartási adatok",
       "contact": ": az általad megadott név, e-mail cím és telefonszám.",
       "quizLabel": "Kérdőívre adott válaszok",
-      "quiz": ": a szerepkörödre, flottaméretedre és időzítésedre vonatkozó válaszaid, hogy jobban megértsük az igényeidet.",
+      "quiz": ": a szerepkörödre, flottaméretedre és tervezett időzítésedre vonatkozó válaszaid, hogy jobban megértsük az igényeidet.",
       "consentLabel": "Hozzájárulási nyilvántartás",
       "consent": ": annak rögzítése, hogy elfogadtad-e ezt a tájékoztatót, illetve feliratkoztál-e marketing célú kommunikációra, a dátummal és időponttal együtt.",
       "technicalLabel": "Technikai adatok",
       "technical": ": az IP-címed és a böngésződ user-agent adata, amelyet automatikusan rögzítünk a hozzájárulás igazolása és a visszaélések megelőzése érdekében."
     },
     "use": {
-      "title": "2. Miért használjuk az adatokat és mi a jogalap",
-      "item1before": "Azért, hogy kapcsolatba lépjünk veled az atlasz kapcsán, és utánkövessük az érdeklődésedet — a ",
+      "title": "2. Miért használjuk az adatokat, és mi a jogalapja",
+      "item1before": "Azért, hogy kapcsolatba lépjünk veled az atlasz kapcsán, és nyomon kövessük az érdeklődésedet — a ",
       "item1consent": "hozzájárulásod",
       "item1after": " alapján (GDPR 6. cikk (1) a) pont), amelyet a jelen tájékoztató elfogadásával adsz meg.",
-      "item2": "Termékfrissítések és hírek e-mailben történő küldéséhez — kizárólag akkor, ha külön feliratkozol marketing célú kommunikációra. Az atlaszra történő feliratkozásnak soha nem feltétele a marketing hozzájárulás, és bármikor leiratkozhatsz, ha írsz nekünk erre a címre: {{email}}.",
+      "item2": "Termékfrissítések és hírek e-mailben történő küldéséhez — kizárólag akkor, ha külön feliratkozol marketing célú kommunikációra. Az atlaszra történő feliratkozásnak soha nem feltétele a marketingcélú hozzájárulás, és bármikor leiratkozhatsz, ha írsz nekünk erre a címre: {{email}}.",
       "item3": "A hozzájárulásod nyilvántartásához, valamint a csalárd vagy visszaélésszerű feliratkozások megelőzéséhez — jogos érdekünk alapján (GDPR 6. cikk (1) f) pont)."
     },
     "share": {
       "title": "3. Kikkel osztjuk meg az adatokat",
-      "lead": "Nem értékesítjük a személyes adataidat. Azokat kizárólag olyan szolgáltatókkal osztjuk meg, akik a nevünkben, szerződés alapján és az utasításaink szerint dolgozzák fel az adatokat:",
+      "lead": "Nem értékesítjük a személyes adataidat. Azokat kizárólag olyan szolgáltatókkal osztjuk meg, amelyek a nevünkben, szerződés alapján és az utasításaink szerint dolgozzák fel az adatokat:",
       "scalewayLabel": "Scaleway",
-      "scaleway": " (Scaleway SAS, Franciaország) — az a felhőszolgáltató, ahol a weboldalt és az alkalmazást hosztoljuk.",
+      "scaleway": " (Scaleway SAS, Franciaország) — az a felhőszolgáltató, amelyen a weboldalt és az alkalmazást futtatjuk.",
       "location": "Az adataidat a szervereinken tároljuk, és az Európai Unión belül dolgozzuk fel.",
       "transfers": "Amennyiben bármely adatkezelés az adataid Európai Gazdasági Térségen (EGT) kívülre történő továbbításával járna, megfelelő garanciákat alkalmazunk, például az Európai Bizottság által elfogadott általános szerződési feltételeket."
     },
@@ -327,7 +354,7 @@
     },
     "cookies": {
       "title": "7. Sütik",
-      "body": "Ez a landing oldal nem használ nyomkövető vagy hirdetési sütiket. A böngésződben kizárólag egy kis beállítást tárolunk, hogy megjegyezzük a világos vagy sötét témára vonatkozó választásodat."
+      "body": "Ez a weboldal nem használ nyomkövető vagy hirdetési sütiket. A böngésződben kizárólag egy kis beállítást tárolunk, hogy megjegyezzük a világos vagy sötét témára vonatkozó választásodat."
     },
     "children": {
       "title": "8. Gyermekek adatai",

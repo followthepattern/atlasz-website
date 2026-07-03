@@ -16,6 +16,7 @@ import { Onboarding } from "@/components/Onboarding";
 import { Footer } from "@/components/Footer";
 import { Privacy } from "@/components/Privacy";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useDocumentMeta } from "./i18n/useDocumentMeta";
 import { QUIZ } from "./quiz";
 import { subscribe } from "./api";
 
@@ -29,6 +30,7 @@ const QUIZ_ENABLED = false;
 
 export default function App() {
   const { t } = useTranslation();
+  useDocumentMeta();
   const [stage, setStage] = useState<Stage>("intro");
   const [step, setStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});

@@ -5,6 +5,7 @@
 // from the SVG's live coordinate transform, so it tracks the map at any size.
 
 import { useLayoutEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { EUROPE_PATHS, CITIES } from "./europeMap";
 
 const W = 1440;
@@ -151,12 +152,10 @@ const CARDS: {
   off: { x: number; y: number };
   className: string;
   plate: string;
-  status: string;
+  statusKey: "enRoute" | "loading";
   tone: "positive" | "muted";
-  from: string;
-  to: string;
-  metricLabel: string;
-  metricValue: string;
+  routeKey: "bud-vie" | "deb-krk" | "sze-muc";
+  metricKey: "eta" | "cargo" | "speed";
 }[] = [
   {
     key: "vie",
@@ -164,12 +163,10 @@ const CARDS: {
     off: { x: -64, y: -208 },
     className: "hidden md:block",
     plate: "AI MI 333",
-    status: "En route",
+    statusKey: "enRoute",
     tone: "positive",
-    from: "Budapest",
-    to: "Vienna",
-    metricLabel: "ETA",
-    metricValue: "1h 12m",
+    routeKey: "bud-vie",
+    metricKey: "eta",
   },
   {
     key: "krk",
@@ -177,12 +174,10 @@ const CARDS: {
     off: { x: 22, y: -8 },
     className: "hidden lg:block",
     plate: "AI MI 118",
-    status: "Loading",
+    statusKey: "loading",
     tone: "muted",
-    from: "Debrecen",
-    to: "Kraków",
-    metricLabel: "Cargo",
-    metricValue: "18.4 t",
+    routeKey: "deb-krk",
+    metricKey: "cargo",
   },
   {
     key: "muc",
@@ -190,12 +185,10 @@ const CARDS: {
     off: { x: -104, y: 46 },
     className: "hidden xl:block",
     plate: "AI MI 077",
-    status: "En route",
+    statusKey: "enRoute",
     tone: "positive",
-    from: "Szeged",
-    to: "Munich",
-    metricLabel: "Speed",
-    metricValue: "82 km/h",
+    routeKey: "sze-muc",
+    metricKey: "speed",
   },
 ];
 
@@ -239,6 +232,7 @@ function useAnchorPositions(svgRef: React.RefObject<SVGSVGElement | null>) {
 }
 
 export function MapHero() {
+  const { t } = useTranslation();
   const svgRef = useRef<SVGSVGElement>(null);
   const pos = useAnchorPositions(svgRef);
 
@@ -336,12 +330,12 @@ export function MapHero() {
           <TruckCard
             key={c.key}
             plate={c.plate}
-            status={c.status}
+            status={t(`mapHero.status.${c.statusKey}`)}
             tone={c.tone}
-            from={c.from}
-            to={c.to}
-            metricLabel={c.metricLabel}
-            metricValue={c.metricValue}
+            from={t(`routeEconomics.routes.${c.routeKey}.from`)}
+            to={t(`routeEconomics.routes.${c.routeKey}.to`)}
+            metricLabel={t(`mapHero.metrics.${c.metricKey}`)}
+            metricValue={t(`mapHero.metricValues.${c.metricKey}`)}
             className={c.className}
             style={
               p
