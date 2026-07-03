@@ -154,23 +154,6 @@ export function Integrations() {
             preserveAspectRatio="none"
             aria-hidden="true"
           >
-            <circle
-              cx="50"
-              cy="50"
-              r="34"
-              fill="none"
-              stroke="var(--hairline)"
-              strokeWidth="0.28"
-            />
-            <circle
-              cx="50"
-              cy="50"
-              r="43"
-              fill="none"
-              stroke="var(--hairline)"
-              strokeWidth="0.18"
-              strokeDasharray="1.2 1.8"
-            />
             {[...FEATURED_PARTNERS, ...SATELLITES].map((node) => (
               <line
                 key={`${node.key}-line`}

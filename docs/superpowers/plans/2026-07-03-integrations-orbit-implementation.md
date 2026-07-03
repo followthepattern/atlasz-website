@@ -51,7 +51,7 @@ const SATELLITES = [
 
 - [x] **Step 2: Replace grid with desktop orbit stage**
 
-Create a stable-height `relative` stage with center atlasz node, radial guide rings, connector lines, featured partner nodes, and smaller category nodes. Keep node card radii at `rounded-lg`.
+Create a stable-height `relative` stage with center atlasz node, connector lines, featured partner nodes, and smaller category nodes. Keep node card radii at `rounded-lg`.
 
 - [x] **Step 3: Add mobile fallback**
 
