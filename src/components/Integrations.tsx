@@ -58,13 +58,87 @@ const PARTNERS = [
   },
 ];
 
+const FEATURED_PARTNERS = [
+  { key: "eurowag", x: 17, y: 23 },
+  { key: "mobilecms", x: 83, y: 25 },
+  { key: "webeye", x: 50, y: 82 },
+];
+
 const CATEGORY_KEYS = ["telematics", "accounting", "tachograph", "fuel", "loadboards", "more"];
+
+const SATELLITES = [
+  { key: "loadboards", x: 38, y: 3 },
+  { key: "more", x: 62, y: 3 },
+  { key: "telematics", x: 10, y: 53 },
+  { key: "accounting", x: 90, y: 53 },
+  { key: "tachograph", x: 26, y: 62 },
+  { key: "fuel", x: 74, y: 62 },
+];
+
+function partnerIcon(key: string) {
+  return PARTNERS.find((partner) => partner.key === key)?.icon;
+}
+
+function CenterNode({ compact = false }: { compact?: boolean }) {
+  return (
+    <div
+      data-integration-node="center"
+      className={`flex flex-col items-center justify-center rounded-lg border border-fg/20 bg-canvas/95 text-center shadow-[0_24px_80px_rgba(0,0,0,0.18)] ${
+        compact ? "min-h-32 px-6 py-7" : "h-44 w-44"
+      }`}
+    >
+      <span className="text-2xl font-semibold tracking-tight text-fg">atlasz</span>
+      <span className="mt-2 text-[11px] font-medium uppercase tracking-wide text-muted">
+        AI TMS
+      </span>
+    </div>
+  );
+}
+
+function FeaturedNode({ partnerKey, className = "" }: { partnerKey: string; className?: string }) {
+  const { t } = useTranslation();
+  return (
+    <div
+      data-integration-node={`featured-${partnerKey}`}
+      className={`rounded-lg border border-hairline bg-surface p-4 shadow-[0_18px_50px_rgba(0,0,0,0.14)] backdrop-blur-sm ${className}`}
+    >
+      <div className="flex items-center gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-hairline text-fg">
+          {partnerIcon(partnerKey)}
+        </span>
+        <div className="min-w-0">
+          <Subheading className="truncate">
+            {t(`integrations.partners.${partnerKey}.name`)}
+          </Subheading>
+          <span className="text-xs text-muted">
+            {t(`integrations.partners.${partnerKey}.category`)}
+          </span>
+        </div>
+      </div>
+      <Text className="mt-3 text-xs leading-relaxed">
+        {t(`integrations.partners.${partnerKey}.description`)}
+      </Text>
+    </div>
+  );
+}
+
+function SatelliteNode({ categoryKey, className = "" }: { categoryKey: string; className?: string }) {
+  const { t } = useTranslation();
+  return (
+    <div
+      data-integration-node={`satellite-${categoryKey}`}
+      className={`rounded-lg border border-hairline bg-canvas/90 px-3 py-2 text-center text-xs font-medium text-muted shadow-[0_10px_28px_rgba(0,0,0,0.08)] backdrop-blur-sm ${className}`}
+    >
+      {t(`integrations.categories.${categoryKey}`)}
+    </div>
+  );
+}
 
 export function Integrations() {
   const { t } = useTranslation();
   return (
     <section className="mx-auto w-full max-w-5xl px-6 py-20">
-      <div className="flex max-w-xl flex-col gap-3">
+      <div className="mx-auto flex max-w-2xl flex-col items-center gap-3 text-center">
         <span className="text-xs font-medium uppercase tracking-wide text-muted">
           {t("integrations.eyebrow")}
         </span>
@@ -72,38 +146,80 @@ export function Integrations() {
         <Text className="text-base">{t("integrations.intro")}</Text>
       </div>
 
-      <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {PARTNERS.map((partner) => (
-          <div
-            key={partner.key}
-            className="flex flex-col gap-4 rounded-xl border border-hairline bg-surface p-6"
+      <div className="mt-14 hidden md:block">
+        <div className="relative min-h-[620px] overflow-hidden">
+          <svg
+            className="absolute inset-0 h-full w-full"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            aria-hidden="true"
           >
-            <div className="flex items-center gap-3">
-              <span className="flex h-11 w-11 items-center justify-center rounded-lg border border-hairline text-fg">
-                {partner.icon}
-              </span>
-              <div className="flex flex-col">
-                <Subheading>{t(`integrations.partners.${partner.key}.name`)}</Subheading>
-                <span className="text-xs text-muted">
-                  {t(`integrations.partners.${partner.key}.category`)}
-                </span>
-              </div>
-            </div>
-            <Text>{t(`integrations.partners.${partner.key}.description`)}</Text>
+            <circle
+              cx="50"
+              cy="50"
+              r="34"
+              fill="none"
+              stroke="var(--hairline)"
+              strokeWidth="0.28"
+            />
+            <circle
+              cx="50"
+              cy="50"
+              r="43"
+              fill="none"
+              stroke="var(--hairline)"
+              strokeWidth="0.18"
+              strokeDasharray="1.2 1.8"
+            />
+            {[...FEATURED_PARTNERS, ...SATELLITES].map((node) => (
+              <line
+                key={`${node.key}-line`}
+                x1="50"
+                y1="50"
+                x2={node.x}
+                y2={node.y}
+                stroke="var(--hairline)"
+                strokeWidth={FEATURED_PARTNERS.some((partner) => partner.key === node.key) ? "0.35" : "0.18"}
+              />
+            ))}
+          </svg>
+
+          <div className="absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2">
+            <CenterNode />
           </div>
-        ))}
+
+          {FEATURED_PARTNERS.map((partner) => (
+            <div
+              key={partner.key}
+              className="absolute z-30 w-60 -translate-x-1/2 -translate-y-1/2"
+              style={{ left: `${partner.x}%`, top: `${partner.y}%` }}
+            >
+              <FeaturedNode partnerKey={partner.key} />
+            </div>
+          ))}
+
+          {SATELLITES.map((satellite) => (
+            <div
+              key={satellite.key}
+              className="absolute z-20 min-w-32 max-w-40 -translate-x-1/2 -translate-y-1/2"
+              style={{ left: `${satellite.x}%`, top: `${satellite.y}%` }}
+            >
+              <SatelliteNode categoryKey={satellite.key} />
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="mt-8 flex flex-col gap-3">
+      <div className="mt-10 flex flex-col gap-4 md:hidden">
+        <CenterNode compact />
+        {FEATURED_PARTNERS.map((partner) => (
+          <FeaturedNode key={partner.key} partnerKey={partner.key} />
+        ))}
+
         <Text>{t("integrations.moreLead")}</Text>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-2 gap-2">
           {CATEGORY_KEYS.map((key) => (
-            <span
-              key={key}
-              className="rounded-full border border-hairline px-3 py-1 text-xs text-muted"
-            >
-              {t(`integrations.categories.${key}`)}
-            </span>
+            <SatelliteNode key={key} categoryKey={key} />
           ))}
         </div>
       </div>
