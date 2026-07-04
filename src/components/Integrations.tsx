@@ -64,17 +64,6 @@ const FEATURED_PARTNERS = [
   { key: "webeye", x: 50, y: 82 },
 ];
 
-const CATEGORY_KEYS = ["telematics", "accounting", "tachograph", "fuel", "loadboards", "more"];
-
-const SATELLITES = [
-  { key: "loadboards", x: 38, y: 3 },
-  { key: "more", x: 62, y: 3 },
-  { key: "telematics", x: 10, y: 53 },
-  { key: "accounting", x: 90, y: 53 },
-  { key: "tachograph", x: 26, y: 62 },
-  { key: "fuel", x: 74, y: 62 },
-];
-
 function partnerIcon(key: string) {
   return PARTNERS.find((partner) => partner.key === key)?.icon;
 }
@@ -122,18 +111,6 @@ function FeaturedNode({ partnerKey, className = "" }: { partnerKey: string; clas
   );
 }
 
-function SatelliteNode({ categoryKey, className = "" }: { categoryKey: string; className?: string }) {
-  const { t } = useTranslation();
-  return (
-    <div
-      data-integration-node={`satellite-${categoryKey}`}
-      className={`rounded-lg border border-hairline bg-canvas/90 px-3 py-2 text-center text-xs font-medium text-muted shadow-[0_10px_28px_rgba(0,0,0,0.08)] backdrop-blur-sm ${className}`}
-    >
-      {t(`integrations.categories.${categoryKey}`)}
-    </div>
-  );
-}
-
 export function Integrations() {
   const { t } = useTranslation();
   return (
@@ -154,7 +131,7 @@ export function Integrations() {
             preserveAspectRatio="none"
             aria-hidden="true"
           >
-            {[...FEATURED_PARTNERS, ...SATELLITES].map((node) => (
+            {FEATURED_PARTNERS.map((node) => (
               <line
                 key={`${node.key}-line`}
                 x1="50"
@@ -162,7 +139,7 @@ export function Integrations() {
                 x2={node.x}
                 y2={node.y}
                 stroke="var(--hairline)"
-                strokeWidth={FEATURED_PARTNERS.some((partner) => partner.key === node.key) ? "0.35" : "0.18"}
+                strokeWidth="0.35"
               />
             ))}
           </svg>
@@ -180,16 +157,6 @@ export function Integrations() {
               <FeaturedNode partnerKey={partner.key} />
             </div>
           ))}
-
-          {SATELLITES.map((satellite) => (
-            <div
-              key={satellite.key}
-              className="absolute z-20 min-w-32 max-w-40 -translate-x-1/2 -translate-y-1/2"
-              style={{ left: `${satellite.x}%`, top: `${satellite.y}%` }}
-            >
-              <SatelliteNode categoryKey={satellite.key} />
-            </div>
-          ))}
         </div>
       </div>
 
@@ -198,13 +165,6 @@ export function Integrations() {
         {FEATURED_PARTNERS.map((partner) => (
           <FeaturedNode key={partner.key} partnerKey={partner.key} />
         ))}
-
-        <Text>{t("integrations.moreLead")}</Text>
-        <div className="grid grid-cols-2 gap-2">
-          {CATEGORY_KEYS.map((key) => (
-            <SatelliteNode key={key} categoryKey={key} />
-          ))}
-        </div>
       </div>
     </section>
   );

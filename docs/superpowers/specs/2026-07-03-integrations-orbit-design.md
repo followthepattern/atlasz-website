@@ -2,7 +2,7 @@
 
 ## Goal
 
-Reshape the integrations section so atlasz is the visual center of the ecosystem. The page should communicate that existing tools connect into atlasz, with the three most important integrations highlighted and the remaining integration categories arranged around them in a polished, balanced way.
+Reshape the integrations section so atlasz is the visual center of the ecosystem. The page should communicate that existing tools connect into atlasz, with the three most important integrations highlighted around the brand.
 
 ## Layout
 
@@ -10,18 +10,17 @@ The section keeps the current heading and intro copy. Below it, replace the part
 
 - Center: an `atlasz` brand node, visually stronger than the surrounding items.
 - Featured integrations: `Eurowag`, `Mobile CMS`, and `WebEye` as larger nodes around the center, each with icon, name, category, and short description.
-- Supporting integrations: the existing category labels as smaller satellite nodes, distributed around the center without long descriptions.
 - Connecting lines: subtle radial lines from the center to nodes, kept low-contrast so they add structure without visual clutter.
 
 ## Responsive Behavior
 
 Desktop and tablet should use the orbit composition with fixed relative positions inside a stable-height stage. The layout must avoid overlap at the existing max content width.
 
-Mobile should collapse to a clean stacked layout: atlasz center node first, then the three featured integrations, then the smaller category nodes in a compact wrapping grid. Text must remain readable and must not overflow.
+Mobile should collapse to a clean stacked layout: atlasz center node first, then the three featured integrations. Text must remain readable and must not overflow.
 
 ## Data And I18n
 
-Reuse the existing `integrations.partners.*` and `integrations.categories.*` translation keys. Add only minimal keys if the center node needs a label or accessible text. Keep English and Hungarian locale files structurally identical.
+Reuse the existing `integrations.partners.*` translation keys. Add only minimal keys if the center node needs a label or accessible text. Keep English and Hungarian locale files structurally identical.
 
 ## Testing
 
