@@ -12,11 +12,17 @@ import type { ScenePalette } from "./palette";
  */
 export const EDGE_RENDER_ORDER = 2;
 
+/* Panels are double-sided. Much of the bodywork is single-sided planes —
+   windows, trailer doors — and their normals all point one way, so a
+   front-facing-only material renders whichever side faces away as nothing but
+   its outline. */
+
 export function panelFill(palette: ScenePalette) {
   const material = new THREE.MeshBasicMaterial({
     color: palette.fill,
     transparent: true,
     opacity: palette.fillOpacity,
+    side: THREE.DoubleSide,
     polygonOffset: true,
     polygonOffsetFactor: 1,
     polygonOffsetUnits: 1,
@@ -30,6 +36,7 @@ export function glassFill(palette: ScenePalette) {
     color: palette.glass,
     transparent: true,
     opacity: palette.glassOpacity,
+    side: THREE.DoubleSide,
     polygonOffset: true,
     polygonOffsetFactor: 1,
     polygonOffsetUnits: 1,
