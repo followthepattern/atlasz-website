@@ -339,10 +339,12 @@ export function proceduralTruck(palette: ScenePalette): SceneAsset {
     side: THREE.FrontSide,
     depthWrite: false,
   });
+  // Sized to fill the flank: the trailer runs x -9.2…-0.6 and y 1.0…4.0, so
+  // this leaves roughly a half-metre margin all round.
   for (const z of [1.3, -1.3]) {
-    const panel = new THREE.PlaneGeometry(5.6, 1.4);
+    const panel = new THREE.PlaneGeometry(7.4, 2.3);
     if (z < 0) panel.rotateY(Math.PI); // face outward, so the text is not mirrored
-    panel.translate(-4.9, 2.95, z);
+    panel.translate(-4.9, 2.6, z);
     const mesh = new THREE.Mesh(panel, decalMaterial);
     mesh.renderOrder = 3; // over the flank ribbing
     group.add(mesh);

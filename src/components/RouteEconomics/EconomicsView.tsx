@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { money } from "@/i18n/format";
 
 type CostKey = "fuel" | "tolls" | "driver" | "other";
 
@@ -29,16 +30,6 @@ const COST_RAMP: { key: CostKey; opacity: number }[] = [
   { key: "driver", opacity: 0.4 },
   { key: "other", opacity: 0.24 },
 ];
-
-function money(n: number, language: string) {
-  const isHu = language.startsWith("hu");
-  return new Intl.NumberFormat(isHu ? "hu-HU" : "en-US", {
-    style: "currency",
-    currency: "EUR",
-    currencyDisplay: isHu ? "narrowSymbol" : "symbol",
-    maximumFractionDigits: 0,
-  }).format(n);
-}
 
 function routeName(id: string, t: ReturnType<typeof useTranslation>["t"]) {
   return {

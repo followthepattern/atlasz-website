@@ -17,8 +17,10 @@ export type TextDecal = {
   dispose(): void;
 };
 
-const WIDTH = 1024;
-const HEIGHT = 256;
+/* Aspect must track the panel it is mapped onto (7.4 m x 2.3 m ≈ 3.2:1), or
+   the lettering stretches. */
+const WIDTH = 1280;
+const HEIGHT = 400;
 
 export function createTextDecal(text: string, color: THREE.Color): TextDecal {
   const canvas = document.createElement("canvas");
@@ -38,10 +40,12 @@ export function createTextDecal(text: string, color: THREE.Color): TextDecal {
     context.textBaseline = "middle";
     // Matches the site's own stack so the branding reads as one system.
     context.font =
-      '700 150px ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
+      '700 300px ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif';
     // Not universally supported; assigning it is harmless where it is not.
-    context.letterSpacing = "18px";
-    context.fillText(text, WIDTH / 2, HEIGHT / 2 + 6);
+    context.letterSpacing = "16px";
+    // Squeeze to the panel width rather than letting long wording overflow.
+    const maxWidth = WIDTH * 0.94;
+    context.fillText(text, WIDTH / 2, HEIGHT / 2 + 10, maxWidth);
     texture.needsUpdate = true;
   }
 
