@@ -81,16 +81,19 @@ function buildFramings(anchors: Record<string, THREE.Vector3>): Framing[] {
       offset: from(trailer, 55, 20, -11), // -11°
       lookOffset: trailer.clone(),
     },
-    // The facility comes into frame beyond the truck as it slows.
+    // The facility comes into frame beyond the truck as it slows. These last
+    // two sit ~13% nearer than the wide pass above — far enough to keep the
+    // References copy clear, close enough that the arrival still lands.
+    // Scaled along the bearing, so the sweep order is untouched.
     {
       at: 0.88,
-      offset: from(trailer, 47, 20, -27), // -30°
+      offset: from(trailer, 41.5, 17, -23.5), // -33°
       lookOffset: from(trailer, 6, 0, 6),
     },
     // Arrived: camera opposite the facility, truck between it and the dock.
     {
       at: 1,
-      offset: from(trailer, 40, 22, -39), // -44°
+      offset: from(trailer, 35.5, 19, -34), // -48°
       lookOffset: from(trailer, 4, 0, 10),
     },
   ];

@@ -15,20 +15,14 @@
     "subtitle": "atlasz brings your fleet, routes, and freight into one intelligent workspace. Answer a few quick questions and we'll be in touch.",
     "cta": "Take atlasz for a test drive"
   },
-  "mapHero": {
+  "telemetry": {
     "status": {
       "enRoute": "En route",
-      "loading": "Loading"
+      "arrived": "Arrived"
     },
     "metrics": {
-      "eta": "ETA",
-      "cargo": "Cargo",
-      "speed": "Speed"
-    },
-    "metricValues": {
-      "eta": "1h 12m",
-      "cargo": "18.4 t",
-      "speed": "82 km/h"
+      "tank": "Tank",
+      "consumption": "Consumption"
     }
   },
   "features": {

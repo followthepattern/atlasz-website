@@ -10,6 +10,7 @@ import {
   lineSegments,
   panelFill,
 } from "../materials";
+import { createTextDecal } from "../decal";
 import type { SceneAsset } from "./types";
 
 /* A Scania S-series tractor unit, by silhouette rather than by badge.
@@ -328,6 +329,25 @@ export function proceduralTruck(palette: ScenePalette): SceneAsset {
     ),
   );
 
+  // Operator branding down both flanks, the way a fleet liveries its trailers.
+  const decal = createTextDecal("ATLASZ", palette.line);
+  const decalMaterial = new THREE.MeshBasicMaterial({
+    map: decal.texture,
+    transparent: true,
+    // FrontSide, not DoubleSide: the trailer panels are slightly translucent, so
+    // a double-sided decal shows through mirror-imaged from the far flank.
+    side: THREE.FrontSide,
+    depthWrite: false,
+  });
+  for (const z of [1.3, -1.3]) {
+    const panel = new THREE.PlaneGeometry(5.6, 1.4);
+    if (z < 0) panel.rotateY(Math.PI); // face outward, so the text is not mirrored
+    panel.translate(-4.9, 2.95, z);
+    const mesh = new THREE.Mesh(panel, decalMaterial);
+    mesh.renderOrder = 3; // over the flank ribbing
+    group.add(mesh);
+  }
+
   addBox([0.14, 0.12, 2.2], [-9.1, 0.62, 0], fill, edgeDim); // underrun bar
   for (const z of [0.7, -0.7]) {
     addBox([0.04, 0.5, 0.42], [-8.35, 0.4, z], fill, edgeDim); // mudflaps
@@ -387,6 +407,7 @@ export function proceduralTruck(palette: ScenePalette): SceneAsset {
     },
     setPalette(next) {
       applyPalette(materials, next);
+      decal.recolor(next.line);
     },
     update(elapsed, delta) {
       for (const wheel of wheels) wheel.rotation.z -= delta * 2.4;
@@ -397,6 +418,7 @@ export function proceduralTruck(palette: ScenePalette): SceneAsset {
       tireEdges.dispose();
       hubEdges.dispose();
       spokeGeometry.dispose();
+      decal.dispose();
     },
   };
 }

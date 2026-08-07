@@ -15,20 +15,14 @@
     "subtitle": "Az atlasz egyetlen intelligens felületen fogja össze a flottádat, útvonalaidat és fuvarfeladataidat. Válaszolj néhány rövid kérdésre, és felvesszük veled a kapcsolatot.",
     "cta": "Próbáld ki az atlaszt"
   },
-  "mapHero": {
+  "telemetry": {
     "status": {
       "enRoute": "Úton",
-      "loading": "Rakodás"
+      "arrived": "Megérkezett"
     },
     "metrics": {
-      "eta": "Érkezés",
-      "cargo": "Rakomány",
-      "speed": "Sebesség"
-    },
-    "metricValues": {
-      "eta": "1 ó 12 p",
-      "cargo": "18,4 t",
-      "speed": "82 km/h"
+      "tank": "Tankszint",
+      "consumption": "Fogyasztás"
     }
   },
   "features": {

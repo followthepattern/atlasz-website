@@ -6,6 +6,7 @@ import { useScrollStore } from "@/motion/ScrollProvider";
 import { prefersReducedMotion } from "@/motion/usePrefersReducedMotion";
 import { createWorld } from "./world";
 import { createCameraRig } from "./cameraRig";
+import { truckScreen } from "./truckScreen";
 import { detectQuality } from "./quality";
 import { observeTheme, paletteForDocument } from "./palette";
 
@@ -124,6 +125,32 @@ export default function SceneCanvas({ ambient = false, onLost }: SceneCanvasProp
       });
     };
 
+    // Roof anchor, projected each frame so the telemetry card can ride above
+    // the truck. Read from the asset's own anchors, not a fixed height, so it
+    // keeps tracking if the model is ever swapped.
+    const roofLocal =
+      world.truckAnchors.roof?.clone() ?? new THREE.Vector3(-4.9, 4, 0);
+    const roofWorld = new THREE.Vector3();
+    const projected = new THREE.Vector3();
+
+    function publishTruckScreen() {
+      const cos = Math.cos(world.follow.heading);
+      const sin = Math.sin(world.follow.heading);
+      roofWorld.set(
+        world.follow.position.x + cos * roofLocal.x + sin * roofLocal.z,
+        world.follow.position.y + roofLocal.y,
+        world.follow.position.z - sin * roofLocal.x + cos * roofLocal.z,
+      );
+      projected.copy(roofWorld).project(camera);
+      const onScreen =
+        projected.z < 1 && Math.abs(projected.x) < 1.1 && Math.abs(projected.y) < 1.1;
+      truckScreen.publish({
+        x: (projected.x * 0.5 + 0.5) * window.innerWidth,
+        y: (-projected.y * 0.5 + 0.5) * window.innerHeight,
+        visible: onScreen,
+      });
+    }
+
     function loop() {
       if (!running) return;
       frame = requestAnimationFrame(loop);
@@ -133,6 +160,7 @@ export default function SceneCanvas({ ambient = false, onLost }: SceneCanvasProp
       world.update(elapsed, delta, store.get());
       rig.update(elapsed, delta);
       renderer.render(world.scene, camera);
+      publishTruckScreen();
       reveal();
     }
 
@@ -151,6 +179,7 @@ export default function SceneCanvas({ ambient = false, onLost }: SceneCanvasProp
       canvas.removeEventListener("webglcontextlost", onContextLost);
       unsubscribe();
       stopTheme();
+      truckScreen.reset(); // the card must not linger over a torn-down scene
       world.dispose();
       renderer.dispose();
     };

@@ -8,6 +8,7 @@ import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
 import { ArrowRight, Check } from "@/icons";
 import { Hero } from "@/components/Hero";
+import { RouteTelemetry } from "@/components/RouteTelemetry";
 import { SceneBackdrop } from "@/scene/SceneBackdrop";
 import { useScrollRefresh } from "@/motion/ScrollProvider";
 import { RouteEconomics } from "@/components/RouteEconomics";
@@ -129,6 +130,9 @@ export default function App() {
       <SceneBackdrop ambient={ambient} />
       {stage === "intro" ? (
         <>
+        {/* Only over the marketing scroll — the funnel parks the scene in an
+            ambient framing the card would no longer describe. */}
+        <RouteTelemetry />
         <Hero onHome={goHome} onStart={() => setStage(QUIZ_ENABLED ? "quiz" : "form")} />
         <RouteEconomics />
         <Features />
