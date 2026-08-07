@@ -10,6 +10,17 @@ export function money(value: number, language: string) {
   }).format(value);
 }
 
+/** EUR, abbreviated — for chart scales where the full figure will not fit. */
+export function compactMoney(value: number, language: string) {
+  return new Intl.NumberFormat(language.startsWith("hu") ? "hu-HU" : "en-US", {
+    style: "currency",
+    currency: "EUR",
+    currencyDisplay: language.startsWith("hu") ? "narrowSymbol" : "symbol",
+    notation: "compact",
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
 export function decimal(value: number, language: string, digits: number) {
   return new Intl.NumberFormat(language.startsWith("hu") ? "hu-HU" : "en-US", {
     minimumFractionDigits: digits,
