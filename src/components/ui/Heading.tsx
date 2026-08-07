@@ -1,19 +1,25 @@
+import type { ComponentPropsWithoutRef } from "react";
+
 export function Heading({
   children,
   className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return <h1 className={`text-xl font-semibold text-fg ${className}`}>{children}</h1>;
+  ...rest
+}: ComponentPropsWithoutRef<"h1">) {
+  return (
+    <h1 className={`text-xl font-semibold text-fg ${className}`} {...rest}>
+      {children}
+    </h1>
+  );
 }
 
 export function Subheading({
   children,
   className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return <h2 className={`text-base font-semibold text-fg ${className}`}>{children}</h2>;
+  ...rest
+}: ComponentPropsWithoutRef<"h2">) {
+  return (
+    <h2 className={`text-base font-semibold text-fg ${className}`} {...rest}>
+      {children}
+    </h2>
+  );
 }

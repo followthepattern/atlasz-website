@@ -1,6 +1,8 @@
 import { useTranslation } from "react-i18next";
 import { Heading, Subheading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
+import { SplitText } from "@/motion/SplitText";
+import { useReveal } from "@/motion/useReveal";
 
 const COMPANIES = [
   { key: "gfl", url: "https://www.gfl-transport.com/", logo: "/references/gfl.png" },
@@ -8,14 +10,19 @@ const COMPANIES = [
 
 export function References() {
   const { t } = useTranslation();
+  const ref = useReveal<HTMLElement>();
   return (
-    <section className="mx-auto w-full max-w-5xl px-6 py-20">
+    <section ref={ref} className="mx-auto w-full max-w-5xl px-6 py-24">
       <div className="flex max-w-xl flex-col gap-3">
-        <span className="text-xs font-medium uppercase tracking-wide text-muted">
+        <span data-reveal className="text-xs font-medium uppercase tracking-wide text-muted">
           {t("references.eyebrow")}
         </span>
-        <Heading className="text-3xl">{t("references.heading")}</Heading>
-        <Text className="text-base">{t("references.intro")}</Text>
+        <Heading className="text-3xl sm:text-4xl">
+          <SplitText text={t("references.heading")} />
+        </Heading>
+        <Text data-reveal className="text-base">
+          {t("references.intro")}
+        </Text>
       </div>
 
       <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -25,7 +32,8 @@ export function References() {
             href={company.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex flex-col gap-2 rounded-xl border border-hairline bg-surface p-6 transition-colors hover:bg-fg/5"
+            data-reveal
+            className="glass flex flex-col gap-2 rounded-xl p-6 transition-colors hover:bg-fg/5"
           >
             <span className="mb-2 inline-flex w-fit items-center rounded-md bg-white px-3 py-2">
               <img

@@ -7,7 +7,9 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
 import { ArrowRight, Check } from "@/icons";
-import { MapHero } from "@/components/MapHero";
+import { Hero } from "@/components/Hero";
+import { SceneBackdrop } from "@/scene/SceneBackdrop";
+import { useScrollRefresh } from "@/motion/ScrollProvider";
 import { RouteEconomics } from "@/components/RouteEconomics";
 import { Features } from "@/components/Features";
 import { Integrations } from "@/components/Integrations";
@@ -29,7 +31,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const QUIZ_ENABLED = false;
 
 export default function App() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   useDocumentMeta();
   const [stage, setStage] = useState<Stage>("intro");
   const [step, setStep] = useState(0);
@@ -105,44 +107,29 @@ export default function App() {
     }
   }
 
+  // Stage changes, the privacy route and the language switch all change the
+  // document height, which invalidates every ScrollTrigger's start/end offset.
+  useScrollRefresh([stage, route, i18n.language]);
+
+  // Outside the marketing scroll the page is a form; the scene settles into a
+  // quiet framing instead of following a progress it no longer maps to.
+  const ambient = stage !== "intro" || route === "#privacy";
+
   if (route === "#privacy") {
-    return <Privacy onBack={goHome} />;
+    return (
+      <>
+        <SceneBackdrop ambient />
+        <Privacy onBack={goHome} />
+      </>
+    );
   }
 
   return (
     <div className="flex min-h-full flex-col">
+      <SceneBackdrop ambient={ambient} />
       {stage === "intro" ? (
         <>
-        <section className="relative flex min-h-[88vh] flex-col overflow-hidden">
-          <MapHero />
-          <header className="relative z-10 mx-auto flex w-full max-w-5xl items-center justify-between px-6 pt-8">
-            <button
-              type="button"
-              onClick={goHome}
-              className="text-lg font-semibold tracking-tight text-fg hover:opacity-80"
-            >
-              atlasz
-            </button>
-            <LanguageSwitcher />
-          </header>
-          <div className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center px-6 py-20">
-            <div className="flex max-w-xl flex-col items-start gap-6">
-              <span className="rounded-full border border-hairline bg-canvas/60 px-3 py-1 text-xs text-muted backdrop-blur-sm">
-                {t("hero.badge")}
-              </span>
-              <h1 className="text-4xl font-semibold tracking-tight text-fg sm:text-5xl">
-                {t("hero.titleLine1")}
-                <br />
-                {t("hero.titleLine2")}
-              </h1>
-              <Text className="max-w-xl text-base">{t("hero.subtitle")}</Text>
-              <Button variant="primary" onClick={() => setStage(QUIZ_ENABLED ? "quiz" : "form")} className="mt-2">
-                {t("hero.cta")}
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </section>
+        <Hero onHome={goHome} onStart={() => setStage(QUIZ_ENABLED ? "quiz" : "form")} />
         <RouteEconomics />
         <Features />
         <Onboarding />
@@ -217,7 +204,7 @@ export default function App() {
               <Text>{t("form.subtitle")}</Text>
             </div>
 
-            <div className="flex flex-col gap-4 rounded-xl border border-hairline bg-surface p-6">
+            <div className="glass flex flex-col gap-4 rounded-xl p-6">
               <Field label={t("form.name.label")} error={errors.name}>
                 <Input
                   value={name}

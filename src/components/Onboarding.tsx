@@ -2,6 +2,8 @@ import type { SVGProps } from "react";
 import { useTranslation } from "react-i18next";
 import { Heading, Subheading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
+import { SplitText } from "@/motion/SplitText";
+import { useReveal } from "@/motion/useReveal";
 
 function Icon(props: SVGProps<SVGSVGElement> & { children: React.ReactNode }) {
   const { children, ...rest } = props;
@@ -57,21 +59,27 @@ const STEPS = [
 
 export function Onboarding() {
   const { t } = useTranslation();
+  const ref = useReveal<HTMLElement>();
   return (
-    <section className="mx-auto w-full max-w-5xl px-6 py-20">
+    <section ref={ref} className="mx-auto w-full max-w-5xl px-6 py-24">
       <div className="flex max-w-xl flex-col gap-3">
-        <span className="text-xs font-medium uppercase tracking-wide text-muted">
+        <span data-reveal className="text-xs font-medium uppercase tracking-wide text-muted">
           {t("onboarding.eyebrow")}
         </span>
-        <Heading className="text-3xl">{t("onboarding.heading")}</Heading>
-        <Text className="text-base">{t("onboarding.intro")}</Text>
+        <Heading className="text-3xl sm:text-4xl">
+          <SplitText text={t("onboarding.heading")} />
+        </Heading>
+        <Text data-reveal className="text-base">
+          {t("onboarding.intro")}
+        </Text>
       </div>
 
       <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-3">
         {STEPS.map((step, i) => (
           <div
             key={step.key}
-            className="flex flex-col gap-4 rounded-xl border border-hairline bg-surface p-6"
+            data-reveal
+            className="glass flex flex-col gap-4 rounded-xl p-6"
           >
             <div className="flex items-center justify-between">
               <span className="flex h-11 w-11 items-center justify-center rounded-lg border border-hairline text-fg">

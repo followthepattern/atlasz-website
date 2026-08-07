@@ -2,6 +2,8 @@ import type { SVGProps } from "react";
 import { useTranslation } from "react-i18next";
 import { Heading, Subheading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
+import { SplitText } from "@/motion/SplitText";
+import { useReveal } from "@/motion/useReveal";
 
 function Icon(props: SVGProps<SVGSVGElement> & { children: React.ReactNode }) {
   const { children, ...rest } = props;
@@ -72,7 +74,7 @@ function CenterNode({ compact = false }: { compact?: boolean }) {
   return (
     <div
       data-integration-node="center"
-      className={`flex flex-col items-center justify-center rounded-lg border border-fg/20 bg-canvas/95 text-center shadow-[0_24px_80px_rgba(0,0,0,0.18)] ${
+      className={`glass flex flex-col items-center justify-center rounded-lg text-center ${
         compact ? "min-h-32 px-6 py-7" : "h-44 w-44"
       }`}
     >
@@ -89,7 +91,8 @@ function FeaturedNode({ partnerKey, className = "" }: { partnerKey: string; clas
   return (
     <div
       data-integration-node={`featured-${partnerKey}`}
-      className={`rounded-lg border border-hairline bg-surface p-4 shadow-[0_18px_50px_rgba(0,0,0,0.14)] backdrop-blur-sm ${className}`}
+      data-reveal
+      className={`glass rounded-lg p-4 ${className}`}
     >
       <div className="flex items-center gap-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-hairline text-fg">
@@ -113,14 +116,19 @@ function FeaturedNode({ partnerKey, className = "" }: { partnerKey: string; clas
 
 export function Integrations() {
   const { t } = useTranslation();
+  const ref = useReveal<HTMLElement>();
   return (
-    <section className="mx-auto w-full max-w-5xl px-6 py-20">
+    <section ref={ref} className="mx-auto w-full max-w-5xl px-6 py-24">
       <div className="mx-auto flex max-w-2xl flex-col items-center gap-3 text-center">
-        <span className="text-xs font-medium uppercase tracking-wide text-muted">
+        <span data-reveal className="text-xs font-medium uppercase tracking-wide text-muted">
           {t("integrations.eyebrow")}
         </span>
-        <Heading className="text-3xl">{t("integrations.heading")}</Heading>
-        <Text className="text-base">{t("integrations.intro")}</Text>
+        <Heading className="text-3xl sm:text-4xl">
+          <SplitText text={t("integrations.heading")} />
+        </Heading>
+        <Text data-reveal className="text-base">
+          {t("integrations.intro")}
+        </Text>
       </div>
 
       <div className="mt-14 hidden md:block">
