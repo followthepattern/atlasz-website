@@ -25,6 +25,23 @@ function smoothstep(t: number) {
  * Framings are built from the truck's own anchor points, never from bare
  * coordinates, so replacing the procedural model with a GLTF of different
  * proportions moves the camera with it.
+ *
+ * INVARIANT — the camera changes sides exactly once across the whole scroll.
+ *
+ * Read each offset as a bearing around the truck: angle = atan2(z, x), with
+ * the facility on the +z side. Those bearings must decrease monotonically, so
+ * the camera makes one continuous sweep from the facility side, across the
+ * truck's nose, to the far side it watches the arrival from. Every sign change
+ * in z is a visible flip; more than one and the viewpoint appears to jump back
+ * and forth. Distance and height are free to vary — that is where the variety
+ * in the shots comes from — but the bearing may only ever go one way.
+ *
+ *   0.00  +35°   0.24  +30°   0.48  +15°
+ *   0.70  -12°   0.88  -33°   1.00  -48°
+ *          ^ the single crossing lives between 0.48 and 0.70
+ *
+ * Bearings are measured from the truck's origin, so they account for each
+ * framing's anchor: the hero hangs off `cab`, the rest off `trailer`.
  */
 function buildFramings(anchors: Record<string, THREE.Vector3>): Framing[] {
   const cab = anchors.cab ?? new THREE.Vector3(1.3, 2.3, 0);
@@ -44,34 +61,37 @@ function buildFramings(anchors: Record<string, THREE.Vector3>): Framing[] {
     // From here down the page is dense with copy and cards, so every framing
     // stands well back. Close framings put the truck and the warehouse straight
     // through the section headings and made them hard to read.
+
+    // Pull back and up. Still on the facility side, bearing barely moved.
     {
-      at: 0.22,
-      offset: from(trailer, 34, 20, 40),
+      at: 0.24,
+      offset: from(trailer, 42, 19, 21), // +30°
       lookOffset: trailer.clone(),
     },
-    // Swing round to the far side.
+    // Swinging toward the truck's nose, still on the near side.
     {
-      at: 0.45,
-      offset: from(trailer, -30, 16, -42),
+      at: 0.48,
+      offset: from(trailer, 55, 21, 13), // +13°
       lookOffset: trailer.clone(),
     },
-    // Tracking shot running alongside the trailer.
+    // The single crossing: the camera passes the truck's nose head-on and comes
+    // out on the far side.
     {
-      at: 0.66,
-      offset: from(trailer, 12, 7, 28),
-      lookOffset: from(trailer, 4, 0, 0),
+      at: 0.7,
+      offset: from(trailer, 55, 20, -11), // -11°
+      lookOffset: trailer.clone(),
     },
-    // The facility comes into frame ahead of the truck as it slows.
+    // The facility comes into frame beyond the truck as it slows.
     {
-      at: 0.86,
-      offset: from(trailer, 42, 23, -38),
-      lookOffset: from(trailer, 8, 0, 8),
+      at: 0.88,
+      offset: from(trailer, 47, 20, -27), // -30°
+      lookOffset: from(trailer, 6, 0, 6),
     },
-    // Arrived: camera on the road side, truck between it and the dock.
+    // Arrived: camera opposite the facility, truck between it and the dock.
     {
       at: 1,
-      offset: from(trailer, 36, 21, -48),
-      lookOffset: from(trailer, 6, 0, 12),
+      offset: from(trailer, 40, 22, -39), // -44°
+      lookOffset: from(trailer, 4, 0, 10),
     },
   ];
 }
@@ -83,6 +103,24 @@ export type CameraRig = {
   snap(): void;
 };
 
+/**
+ * Enforces the single-crossing invariant in development. Bearings drifting out
+ * of order is invisible in a still and only shows up as the viewpoint jumping
+ * sides mid-scroll, which is exactly the kind of thing that survives a review.
+ */
+function assertSingleCrossing(framings: Framing[]) {
+  const bearings = framings.map((f) => (Math.atan2(f.offset.z, f.offset.x) * 180) / Math.PI);
+  for (let i = 1; i < bearings.length; i += 1) {
+    if (bearings[i] > bearings[i - 1] + 0.5) {
+      console.warn(
+        "[cameraRig] camera bearing must decrease monotonically so the view " +
+          `flips sides only once; framing ${i} (${bearings[i].toFixed(1)}°) ` +
+          `swings back past framing ${i - 1} (${bearings[i - 1].toFixed(1)}°).`,
+      );
+    }
+  }
+}
+
 export function createCameraRig(
   camera: THREE.PerspectiveCamera,
   follow: Follow,
@@ -90,6 +128,7 @@ export function createCameraRig(
   options: { reduced?: boolean } = {},
 ): CameraRig {
   const framings = buildFramings(anchors);
+  if (import.meta.env.DEV) assertSingleCrossing(framings);
 
   const localOffset = framings[0].offset.clone();
   const localLook = framings[0].lookOffset.clone();
