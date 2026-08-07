@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { compactMoney } from "@/i18n/format";
-import { FLOATING_SHELL, useTruckAnchor } from "./useTruckAnchor";
 
 /* Eight months of fleet income and cost, in euros. Fixed rather than derived
    from today's date so the chart is identical on every load. */
@@ -16,24 +15,52 @@ const MONTHS = [
   { month: 7, income: 156_000, cost: 98_000 },
 ] as const;
 
-const PEAK = Math.max(...MONTHS.map((m) => m.income));
 const TOTAL_PROFIT = MONTHS.reduce((sum, m) => sum + (m.income - m.cost), 0);
 
+/* Plot geometry, in the SVG's own units. */
+const W = 300;
+const H = 118;
+/* Zero-based, with headroom — a cropped baseline would exaggerate the trend. */
+const SCALE_MAX = 168_000;
+
+type Point = [number, number];
+
+function toPoints(pick: (m: (typeof MONTHS)[number]) => number): Point[] {
+  return MONTHS.map((m, i) => [
+    (i / (MONTHS.length - 1)) * W,
+    H - (pick(m) / SCALE_MAX) * H,
+  ]);
+}
+
 /**
- * Monthly income against cost, riding beside the truck.
+ * Smooths through the points with horizontal control tangents. Straight
+ * segments read as sampled readings; this reads as a trend, which is what a
+ * month-over-month line is for.
+ */
+function smoothPath(points: Point[]) {
+  if (points.length < 2) return "";
+  let d = `M ${points[0][0]} ${points[0][1]}`;
+  for (let i = 0; i < points.length - 1; i += 1) {
+    const [x0, y0] = points[i];
+    const [x1, y1] = points[i + 1];
+    const mid = (x0 + x1) / 2;
+    d += ` C ${mid} ${y0} ${mid} ${y1} ${x1} ${y1}`;
+  }
+  return d;
+}
+
+/**
+ * Monthly income against cost as a line chart, pinned to the right margin.
  *
- * Deliberately frameless — no panel, no border. It is instrumentation drifting
- * over the scene rather than a card sitting on the page, and a surface behind it
- * would only reintroduce the contrast problem the readouts were moved into the
- * background to avoid.
+ * The shaded band between the two lines is the profit — the gap is the point,
+ * so it is drawn rather than left to be inferred.
  *
- * Each bar is a month's income; the green portion is what was left after costs.
- * Month names come from Intl, so they follow the active language without adding
- * a single translation key.
+ * Frameless by design: instrumentation drifting over the scene, not a card on
+ * the page. Positioning belongs to the group in TruckOverlay — this travels
+ * with the telemetry card rather than anchoring itself.
  */
 export function MonthlyPerformance() {
   const { t, i18n } = useTranslation();
-  const wrapperRef = useTruckAnchor<HTMLDivElement>();
   const language = i18n.language;
 
   const labels = useMemo(() => {
@@ -45,36 +72,69 @@ export function MonthlyPerformance() {
     return MONTHS.map((m) => formatter.format(new Date(2026, m.month, 1)));
   }, [language]);
 
+  const incomePoints = useMemo(() => toPoints((m) => m.income), []);
+  const costPoints = useMemo(() => toPoints((m) => m.cost), []);
+
+  const incomePath = smoothPath(incomePoints);
+  const costPath = smoothPath(costPoints);
+  // Forward along income, back along cost: the enclosed area is the margin.
+  const bandPath = `${incomePath} L ${costPoints[costPoints.length - 1].join(" ")} ${smoothPath(
+    [...costPoints].reverse(),
+  ).replace(/^M/, "L")} Z`;
+
+  // Cost, filled down to the baseline. Without it the zero-based scale leaves
+  // the lower half of the plot empty and the lines float away from the axis.
+  const costArea = `${costPath} L ${W} ${H} L 0 ${H} Z`;
+
+  const lastIncome = incomePoints[incomePoints.length - 1];
+  const lastCost = costPoints[costPoints.length - 1];
+
   return (
-    <div ref={wrapperRef} aria-hidden="true" className={FLOATING_SHELL}>
-      {/* Left of the cab and dropped below it, into the band under the CTA —
-          high enough and it sits straight across the headline block. */}
-      <div className="w-[380px] -translate-x-[104%] translate-y-[36%]">
+    <div className="relative w-full">
+      {/* Feathered pool of page colour. Frameless still, but the chart was
+          washing out wherever it crossed the truck or the treeline. */}
+      <div
+        className="ambient-scrim pointer-events-none absolute -inset-x-6 -inset-y-5"
+        aria-hidden="true"
+      />
+
+      <div className="relative">
         <div className="flex items-baseline gap-2.5">
-          <span className="text-3xl font-semibold tabular-nums tracking-tight text-fg">
+          <span className="text-2xl font-semibold tabular-nums tracking-tight text-fg">
             {compactMoney(TOTAL_PROFIT, language)}
           </span>
           <span className="text-xs text-muted">{t("routeEconomics.profit")}</span>
         </div>
 
-        <div className="mt-4 flex h-40 items-end gap-2">
-          {MONTHS.map((m) => {
-            const profitShare = ((m.income - m.cost) / m.income) * 100;
-            return (
-              <div
-                key={m.month}
-                className="flex w-full flex-1 flex-col overflow-hidden rounded-[3px]"
-                style={{ height: `${(m.income / PEAK) * 100}%` }}
-              >
-                <span className="w-full bg-positive" style={{ height: `${profitShare}%` }} />
-                <span className="w-full bg-fg/25" style={{ height: `${100 - profitShare}%` }} />
-              </div>
-            );
-          })}
-        </div>
+        <svg
+          viewBox={`0 -6 ${W} ${H + 12}`}
+          className="mt-3 w-full overflow-visible"
+          style={{ height: H }}
+        >
+          <path d={costArea} fill="var(--fg)" fillOpacity="0.09" />
+          <path d={bandPath} fill="var(--positive)" fillOpacity="0.18" />
+          <path
+            d={incomePath}
+            fill="none"
+            stroke="var(--fg)"
+            strokeWidth="1.75"
+            strokeOpacity="0.7"
+            strokeLinecap="round"
+          />
+          <path
+            d={costPath}
+            fill="none"
+            stroke="var(--muted)"
+            strokeWidth="1.5"
+            strokeOpacity="0.65"
+            strokeLinecap="round"
+            strokeDasharray="4 3"
+          />
+          <circle cx={lastIncome[0]} cy={lastIncome[1]} r="3" fill="var(--fg)" />
+          <circle cx={lastCost[0]} cy={lastCost[1]} r="2.5" fill="var(--muted)" />
+        </svg>
 
-        {/* Separate row so the bars' percentage heights stay true. */}
-        <div className="mt-2 flex gap-2 border-t border-hairline pt-2">
+        <div className="mt-2 flex border-t border-hairline pt-2">
           {labels.map((label, i) => (
             <span
               key={MONTHS[i].month}
@@ -87,12 +147,16 @@ export function MonthlyPerformance() {
 
         <div className="mt-3 flex items-center gap-4 text-[11px]">
           <span className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-positive" />
-            <span className="text-muted">{t("routeEconomics.profit")}</span>
+            <span className="h-px w-3 bg-fg/70" />
+            <span className="text-muted">{t("routeEconomics.income")}</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-fg/25" />
+            <span className="h-px w-3 bg-muted" />
             <span className="text-muted">{t("routeEconomics.cost")}</span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-2 w-3 rounded-[2px] bg-positive/25" />
+            <span className="text-muted">{t("routeEconomics.profit")}</span>
           </span>
         </div>
       </div>

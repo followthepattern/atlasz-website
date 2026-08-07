@@ -133,6 +133,32 @@ html.lenis body {
     0 20px 60px rgba(15, 23, 42, 0.1);
 }
 
+/* Contrast floor for copy sitting over the 3D scene. The scene's brightness
+   changes as the truck drives through frame, so text cannot rely on the page
+   background being where it started. Weighted to the left, where the copy is,
+   and faded out well before the vehicle so it never reads as a panel edge. */
+.hero-scrim {
+  background: linear-gradient(
+    to right,
+    color-mix(in oklab, var(--canvas) 88%, transparent) 0%,
+    color-mix(in oklab, var(--canvas) 74%, transparent) 30%,
+    color-mix(in oklab, var(--canvas) 34%, transparent) 48%,
+    transparent 60%
+  );
+}
+
+/* Same idea for the floating readouts: a soft pool of page colour under them so
+   the chart is legible rather than half-lost in whatever it happens to be
+   passing over. Feathered on every side — this must not become a frame. */
+.ambient-scrim {
+  background: color-mix(in oklab, var(--canvas) 74%, transparent);
+  border-radius: 24px;
+  /* Blurring a solid rounded rect, rather than a radial gradient. A radial
+     large enough to cover a wide, short chart still has colour left at the box
+     edge, which shows up as exactly the hard rectangle this is meant to avoid. */
+  filter: blur(16px);
+}
+
 /* Ambient instrumentation that drifts behind the page content. Deliberately
    weaker than .glass: these panels sit under the copy, and at full strength a
    muted heading passing over one loses its contrast even though the stacking

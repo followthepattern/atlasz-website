@@ -27,6 +27,11 @@ export function Hero({ onHome, onStart }: HeroProps) {
 
   return (
     <section className="relative flex min-h-[92vh] flex-col overflow-hidden">
+      {/* Sits above the canvas and the floating readouts (both negative z) and
+          below the copy at z-10, so the headline keeps its contrast whatever
+          the scene is doing behind it. */}
+      <div className="hero-scrim pointer-events-none absolute inset-0" aria-hidden="true" />
+
       <header className="relative z-10 mx-auto flex w-full max-w-5xl items-center justify-between px-6 pt-8">
         <button
           type="button"
