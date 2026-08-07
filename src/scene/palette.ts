@@ -20,12 +20,10 @@ export type ScenePalette = {
   /** Windscreen and side windows — a touch lighter than the body panels. */
   glass: THREE.Color;
   grid: THREE.Color;
-  particle: THREE.Color;
   fog: THREE.Color;
   fillOpacity: number;
   lineOpacity: number;
   glassOpacity: number;
-  particleOpacity: number;
   gridOpacity: number;
   fogDensity: number;
 };
@@ -56,12 +54,10 @@ export function paletteForDocument(): ScenePalette {
     fill,
     glass,
     grid: muted.clone(),
-    particle: muted.clone(),
     fog: canvas.clone(),
     fillOpacity: dark ? 0.92 : 0.95,
     lineOpacity: dark ? 0.72 : 0.9,
     glassOpacity: dark ? 0.8 : 0.9,
-    particleOpacity: 0.35,
     gridOpacity: dark ? 0.16 : 0.28,
     fogDensity: dark ? 0.015 : 0.011,
   };

@@ -1,11 +1,20 @@
 import * as THREE from "three";
 import { CAMERA_DAMPING } from "@/motion/tokens";
+import type { Follow } from "./world";
 
-export type Keyframe = {
+/**
+ * A framing, expressed relative to the moving vehicle rather than to the world.
+ *
+ * Offsets are in the truck's own frame: +x is ahead of it, +y up, +z out to one
+ * side. Because the truck drives along the route as the page scrolls, a
+ * world-space keyframe would be pointed at empty tarmac within a second — every
+ * framing has to travel with the vehicle.
+ */
+export type Framing = {
   /** Scroll progress in [0, 1] at which this framing is fully reached. */
   at: number;
-  position: THREE.Vector3;
-  target: THREE.Vector3;
+  offset: THREE.Vector3;
+  lookOffset: THREE.Vector3;
 };
 
 function smoothstep(t: number) {
@@ -13,57 +22,56 @@ function smoothstep(t: number) {
 }
 
 /**
- * Framings for each section of the page. Every position is derived from a world
- * anchor plus an offset — never a bare coordinate — so replacing the procedural
- * truck with a GLTF of different proportions shifts the camera with it instead
- * of leaving it pointed at empty grid.
+ * Framings are built from the truck's own anchor points, never from bare
+ * coordinates, so replacing the procedural model with a GLTF of different
+ * proportions moves the camera with it.
  */
-function buildKeyframes(anchors: Record<string, THREE.Vector3>): Keyframe[] {
-  const cab = anchors.truckCab;
-  const trailer = anchors.truckTrailer;
-  const whole = anchors.truckWhole;
-  const dock = anchors.warehouseDock;
-  const warehouse = anchors.warehouseWhole;
-  const finale = new THREE.Vector3().lerpVectors(whole, warehouse, 0.5);
+function buildFramings(anchors: Record<string, THREE.Vector3>): Framing[] {
+  const cab = anchors.cab ?? new THREE.Vector3(1.3, 2.3, 0);
+  const trailer = anchors.trailer ?? new THREE.Vector3(-4.9, 2.5, 0);
+
+  const from = (base: THREE.Vector3, x: number, y: number, z: number) =>
+    base.clone().add(new THREE.Vector3(x, y, z));
 
   return [
-    // Hero — low three-quarter on the cab, headlights toward camera. The target
-    // is pushed screen-left of the truck so the vehicle sits in the right half
-    // of the frame and leaves the headline column clear.
+    // Hero — low three-quarter ahead of the cab, truck held to the right of
+    // frame so the headline column stays clear.
     {
       at: 0,
-      position: cab.clone().add(new THREE.Vector3(16, 2.2, 12)),
-      target: cab.clone().add(new THREE.Vector3(-4.2, 0.3, 5.6)),
+      offset: from(cab, 16, 2.2, 12),
+      lookOffset: from(cab, -4.2, 0.3, 5.6),
     },
-    // RouteEconomics — pull back and up, the route line reads across the grid.
+    // From here down the page is dense with copy and cards, so every framing
+    // stands well back. Close framings put the truck and the warehouse straight
+    // through the section headings and made them hard to read.
     {
-      at: 0.25,
-      position: trailer.clone().add(new THREE.Vector3(26, 13, 30)),
-      target: trailer.clone(),
+      at: 0.22,
+      offset: from(trailer, 34, 20, 40),
+      lookOffset: trailer.clone(),
     },
-    // Features — slow orbit around to the far side.
+    // Swing round to the far side.
     {
-      at: 0.48,
-      position: whole.clone().add(new THREE.Vector3(-19, 7, 23)),
-      target: whole.clone(),
+      at: 0.45,
+      offset: from(trailer, -30, 16, -42),
+      lookOffset: trailer.clone(),
     },
-    // Onboarding — tracking shot alongside the trailer.
+    // Tracking shot running alongside the trailer.
     {
-      at: 0.62,
-      position: trailer.clone().add(new THREE.Vector3(-11, 2.4, 13)),
-      target: trailer.clone().add(new THREE.Vector3(6, 0.5, 0)),
+      at: 0.66,
+      offset: from(trailer, 12, 7, 28),
+      lookOffset: from(trailer, 4, 0, 0),
     },
-    // Integrations — the warehouse, with the data stream arriving at the dock.
+    // The facility comes into frame ahead of the truck as it slows.
     {
-      at: 0.8,
-      position: dock.clone().add(new THREE.Vector3(30, 11, 30)),
-      target: warehouse.clone(),
+      at: 0.86,
+      offset: from(trailer, 42, 23, -38),
+      lookOffset: from(trailer, 8, 0, 8),
     },
-    // References — wide and static, the whole route in frame.
+    // Arrived: camera on the road side, truck between it and the dock.
     {
-      at: 0.95,
-      position: finale.clone().add(new THREE.Vector3(10, 34, 78)),
-      target: finale.clone(),
+      at: 1,
+      offset: from(trailer, 36, 21, -48),
+      lookOffset: from(trailer, 6, 0, 12),
     },
   ];
 }
@@ -77,54 +85,80 @@ export type CameraRig = {
 
 export function createCameraRig(
   camera: THREE.PerspectiveCamera,
+  follow: Follow,
   anchors: Record<string, THREE.Vector3>,
   options: { reduced?: boolean } = {},
 ): CameraRig {
-  const keyframes = buildKeyframes(anchors);
-  const desiredPosition = keyframes[0].position.clone();
-  const desiredTarget = keyframes[0].target.clone();
-  const currentTarget = keyframes[0].target.clone();
+  const framings = buildFramings(anchors);
 
-  camera.position.copy(desiredPosition);
-  camera.lookAt(currentTarget);
+  const localOffset = framings[0].offset.clone();
+  const localLook = framings[0].lookOffset.clone();
+  const desiredPosition = new THREE.Vector3();
+  const desiredTarget = new THREE.Vector3();
+  const currentTarget = new THREE.Vector3();
+
+  /** Local offset -> world, using the truck's current position and heading. */
+  function toWorld(local: THREE.Vector3, out: THREE.Vector3) {
+    const h = follow.heading;
+    const cos = Math.cos(h);
+    const sin = Math.sin(h);
+    // Truck forward is +X rotated by h; its side axis is +Z rotated by h.
+    return out.set(
+      follow.position.x + cos * local.x + sin * local.z,
+      follow.position.y + local.y,
+      follow.position.z - sin * local.x + cos * local.z,
+    );
+  }
 
   function setProgress(progress: number) {
     const p = Math.min(1, Math.max(0, progress));
+    const first = framings[0];
+    const last = framings[framings.length - 1];
 
-    if (p <= keyframes[0].at) {
-      desiredPosition.copy(keyframes[0].position);
-      desiredTarget.copy(keyframes[0].target);
-      return;
-    }
-    const last = keyframes[keyframes.length - 1];
-    if (p >= last.at) {
-      desiredPosition.copy(last.position);
-      desiredTarget.copy(last.target);
-      return;
-    }
-
-    for (let i = 0; i < keyframes.length - 1; i += 1) {
-      const a = keyframes[i];
-      const b = keyframes[i + 1];
-      if (p >= a.at && p <= b.at) {
-        const span = b.at - a.at;
-        const t = smoothstep(span === 0 ? 0 : (p - a.at) / span);
-        desiredPosition.lerpVectors(a.position, b.position, t);
-        desiredTarget.lerpVectors(a.target, b.target, t);
-        return;
+    if (p <= first.at) {
+      localOffset.copy(first.offset);
+      localLook.copy(first.lookOffset);
+    } else if (p >= last.at) {
+      localOffset.copy(last.offset);
+      localLook.copy(last.lookOffset);
+    } else {
+      for (let i = 0; i < framings.length - 1; i += 1) {
+        const a = framings[i];
+        const b = framings[i + 1];
+        if (p >= a.at && p <= b.at) {
+          const span = b.at - a.at;
+          const t = smoothstep(span === 0 ? 0 : (p - a.at) / span);
+          localOffset.lerpVectors(a.offset, b.offset, t);
+          localLook.lerpVectors(a.lookOffset, b.lookOffset, t);
+          break;
+        }
       }
     }
+
+    toWorld(localOffset, desiredPosition);
+    toWorld(localLook, desiredTarget);
   }
 
   function snap() {
+    toWorld(localOffset, desiredPosition);
+    toWorld(localLook, desiredTarget);
     camera.position.copy(desiredPosition);
     currentTarget.copy(desiredTarget);
     camera.lookAt(currentTarget);
   }
 
+  snap();
+
   function update(elapsed: number, delta: number) {
+    // The truck has moved since setProgress ran, so resolve the framing against
+    // its current pose every frame rather than only on scroll.
+    toWorld(localOffset, desiredPosition);
+    toWorld(localLook, desiredTarget);
+
     if (options.reduced) {
-      snap();
+      camera.position.copy(desiredPosition);
+      currentTarget.copy(desiredTarget);
+      camera.lookAt(currentTarget);
       return;
     }
 
@@ -134,10 +168,8 @@ export function createCameraRig(
     currentTarget.lerp(desiredTarget, factor);
 
     // Idle drift, so the frame breathes when the visitor stops scrolling.
-    const driftX = Math.sin(elapsed * 0.21) * 0.5;
-    const driftY = Math.cos(elapsed * 0.17) * 0.32;
-    camera.position.x += driftX * 0.06;
-    camera.position.y += driftY * 0.06;
+    camera.position.x += Math.sin(elapsed * 0.21) * 0.03;
+    camera.position.y += Math.cos(elapsed * 0.17) * 0.02;
 
     camera.lookAt(currentTarget);
   }

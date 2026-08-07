@@ -4,13 +4,12 @@ import type { QualitySettings } from "./quality";
 import { applyPalette, disposeObject, edgeMaterial } from "./materials";
 import { proceduralTruck } from "./assets/truck";
 import { proceduralWarehouse } from "./assets/warehouse";
-import { proceduralParticles } from "./assets/particles";
 import type { SceneAsset } from "./assets/types";
 
-/* The route is the authority on layout. The truck and the warehouse are placed
-   ON the curve and rotated to its tangent — the first version pinned the truck
-   to the +X axis while the road drifted in Z, so it sat visibly askew to its
-   own route. Nothing here hardcodes a vehicle position any more. */
+/* The route is the authority on layout. The truck is placed ON the curve and
+   rotated to its tangent, and its position along the curve is driven by scroll:
+   scrolling the page drives the vehicle down the road until it pulls in at the
+   facility. Nothing here hardcodes a vehicle position. */
 
 const ROUTE = new THREE.CatmullRomCurve3([
   new THREE.Vector3(-150, 0.05, -8),
@@ -21,12 +20,26 @@ const ROUTE = new THREE.CatmullRomCurve3([
   new THREE.Vector3(230, 0.05, 20),
 ]);
 
-const TRUCK_AT = 0.44;
-const WAREHOUSE_AT = 0.68;
-const WAREHOUSE_OFFSET = 26; // metres to the side of the carriageway
+/** Where the truck sits on the route at scroll 0 and scroll 1. */
+const TRUCK_FROM = 0.3;
+const TRUCK_TO = 0.612;
+
+const WAREHOUSE_AT = 0.62;
+const WAREHOUSE_OFFSET = 24; // metres from the carriageway centreline
+const WAREHOUSE_WIDTH = 30; // must match proceduralWarehouse
+
+/** How far off the carriageway the truck pulls in toward the dock face. */
+const DOCK_PULL = WAREHOUSE_OFFSET - WAREHOUSE_WIDTH / 2 - 5;
+/** Fraction of the scroll over which that turn-in happens, at the very end. */
+const PULL_IN_FROM = 0.78;
 
 const GRID_SIZE = 460;
 const GRID_STEP = 8;
+
+function smoothstep(t: number) {
+  const c = Math.min(1, Math.max(0, t));
+  return c * c * (3 - 2 * c);
+}
 
 /** Heading that points an asset's local +X along the route at `t`. */
 function headingAt(t: number) {
@@ -38,7 +51,6 @@ function headingAt(t: number) {
 function placeOnRoute(object: THREE.Object3D, t: number, sideOffset = 0) {
   const point = ROUTE.getPointAt(t);
   const heading = headingAt(t);
-  // Perpendicular to the tangent in the ground plane.
   object.position.set(
     point.x + Math.sin(heading) * sideOffset,
     0,
@@ -61,11 +73,9 @@ function buildGrid(material: THREE.LineBasicMaterial) {
 
 function buildRoute(material: THREE.LineBasicMaterial) {
   const centre = ROUTE.getPoints(220);
-  const geometry = new THREE.BufferGeometry().setFromPoints(centre);
   const group = new THREE.Group();
-  group.add(new THREE.Line(geometry, material));
+  group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(centre), material));
 
-  // Carriageway edges, so the route reads as a road rather than a stray line.
   for (const offset of [4.5, -4.5]) {
     const edge = centre.map((point, i) => {
       const heading = headingAt(Math.min(1, i / (centre.length - 1)));
@@ -80,9 +90,17 @@ function buildRoute(material: THREE.LineBasicMaterial) {
   return group;
 }
 
+/** Live pose of the vehicle the camera is following. Mutated every frame. */
+export type Follow = {
+  position: THREE.Vector3;
+  heading: number;
+};
+
 export type World = {
   scene: THREE.Scene;
-  anchors: Record<string, THREE.Vector3>;
+  follow: Follow;
+  /** The truck's own anchor points, in its local space. */
+  truckAnchors: Record<string, THREE.Vector3>;
   setPalette(palette: ScenePalette): void;
   update(elapsed: number, delta: number, progress: number): void;
   dispose(): void;
@@ -108,48 +126,34 @@ export function createWorld(palette: ScenePalette, quality: QualitySettings): Wo
   scene.add(buildRoute(routeMaterial));
 
   const truck = proceduralTruck(palette);
-  placeOnRoute(truck.object3D, TRUCK_AT);
   scene.add(truck.object3D);
 
   const warehouse = proceduralWarehouse(palette, quality.rackCount);
   placeOnRoute(warehouse.object3D, WAREHOUSE_AT, WAREHOUSE_OFFSET);
-  // Turn the dock to face the carriageway the truck is arriving on.
+  // Turn the dock to face the carriageway the truck arrives on.
   warehouse.object3D.rotation.y += Math.PI / 2;
   scene.add(warehouse.object3D);
 
-  // Anchors resolve in world space, after placement and rotation — otherwise
-  // the warehouse's local +X dock lands on the wrong side.
-  truck.object3D.updateMatrixWorld(true);
-  warehouse.object3D.updateMatrixWorld(true);
+  const follow: Follow = { position: new THREE.Vector3(), heading: 0 };
 
-  const toWorld = (asset: SceneAsset, key: string) =>
-    asset.object3D.localToWorld(asset.anchorPoints[key].clone());
+  function driveTo(progress: number) {
+    const p = Math.min(1, Math.max(0, progress));
+    const t = TRUCK_FROM + (TRUCK_TO - TRUCK_FROM) * p;
+    // Turn in toward the dock over the last stretch of the scroll.
+    const side = smoothstep((p - PULL_IN_FROM) / (1 - PULL_IN_FROM)) * DOCK_PULL;
+    placeOnRoute(truck.object3D, t, side);
+    follow.position.copy(truck.object3D.position);
+    follow.heading = truck.object3D.rotation.y;
+  }
 
-  const anchors: Record<string, THREE.Vector3> = {
-    truckCab: toWorld(truck, "cab"),
-    truckHood: toWorld(truck, "hood"),
-    truckTrailer: toWorld(truck, "trailer"),
-    truckRear: toWorld(truck, "rear"),
-    truckRoof: toWorld(truck, "roof"),
-    truckWhole: toWorld(truck, "whole"),
-    warehouseDock: toWorld(warehouse, "dock"),
-    warehouseInterior: toWorld(warehouse, "interior"),
-    warehouseWhole: toWorld(warehouse, "whole"),
-  };
+  driveTo(0);
 
-  const particles = proceduralParticles(
-    palette,
-    quality.particleCount,
-    anchors.truckRoof.clone(),
-    anchors.warehouseDock.clone(),
-  );
-  scene.add(particles.object3D);
-
-  const assets: SceneAsset[] = [truck, warehouse, particles];
+  const assets: SceneAsset[] = [truck, warehouse];
 
   return {
     scene,
-    anchors,
+    follow,
+    truckAnchors: truck.anchorPoints,
     setPalette(next) {
       applyPalette(materials, next);
       for (const asset of assets) asset.setPalette(next);
@@ -158,6 +162,7 @@ export function createWorld(palette: ScenePalette, quality: QualitySettings): Wo
       fog.density = next.fogDensity;
     },
     update(elapsed, delta, progress) {
+      driveTo(progress);
       for (const asset of assets) asset.update?.(elapsed, delta, progress);
     },
     dispose() {

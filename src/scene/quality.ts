@@ -3,16 +3,15 @@ export type QualityTier = "low" | "medium" | "high";
 export type QualitySettings = {
   tier: QualityTier;
   maxDpr: number;
-  particleCount: number;
   /** Rack units instanced inside the warehouse shell. */
   rackCount: number;
   antialias: boolean;
 };
 
 const SETTINGS: Record<QualityTier, Omit<QualitySettings, "tier">> = {
-  low: { maxDpr: 1, particleCount: 260, rackCount: 12, antialias: false },
-  medium: { maxDpr: 1.5, particleCount: 900, rackCount: 24, antialias: true },
-  high: { maxDpr: 2, particleCount: 2200, rackCount: 40, antialias: true },
+  low: { maxDpr: 1, rackCount: 12, antialias: false },
+  medium: { maxDpr: 1.5, rackCount: 24, antialias: true },
+  high: { maxDpr: 2, rackCount: 40, antialias: true },
 };
 
 /* A persistent canvas renders for the whole visit, so the cost of guessing too

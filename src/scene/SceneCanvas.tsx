@@ -58,7 +58,7 @@ export default function SceneCanvas({ ambient = false, onLost }: SceneCanvasProp
     );
 
     const world = createWorld(palette, quality);
-    const rig = createCameraRig(camera, world.anchors, { reduced });
+    const rig = createCameraRig(camera, world.follow, world.truckAnchors, { reduced });
     rig.setProgress(0);
     rig.snap();
 
