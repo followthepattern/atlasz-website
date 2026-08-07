@@ -30,6 +30,16 @@ import type { SceneAsset } from "./types";
      +Z is the width axis */
 
 const NOSE = 2.62;
+/** Corner rounding on the cab extrusion. */
+const CAB_BEVEL = 0.13;
+/**
+ * Where the cab's front face actually is. The bevel pushes the extrusion's
+ * mid-section proud of the profile by `bevelSize`, so the visible face is at
+ * NOSE + CAB_BEVEL. Panels placed at NOSE land *inside* the solid body and
+ * vanish — which is exactly what happened to the windscreen, grille and
+ * headlamps on the first pass at this shape.
+ */
+const FACE = NOSE + CAB_BEVEL;
 const HALF_W = 1.24;
 const ROOF = 3.88;
 const WHEEL_RADIUS = 0.56;
@@ -37,16 +47,37 @@ const TRACK = 1.05;
 const FRONT_AXLE = 1.8;
 const AXLES = [FRONT_AXLE, -6.3, -7.6];
 
-/** Tall, upright, with a small roof-to-screen taper. */
+/**
+ * Tall and upright, but with the roof sweeping down into the screen header on
+ * a long curve rather than a straight chamfer. Together with the bevelled
+ * extrusion below, this is what stops the front reading as a plain box.
+ */
 function cabProfile() {
   const shape = new THREE.Shape();
   shape.moveTo(0, 0.4);
-  shape.lineTo(0, ROOF);
-  shape.lineTo(1.9, ROOF);
-  shape.lineTo(2.36, 3.72);
-  shape.lineTo(NOSE, 3.34);
+  shape.lineTo(0, ROOF - 0.3);
+  shape.quadraticCurveTo(0, ROOF, 0.3, ROOF); // rounded rear-top corner
+  shape.lineTo(1.55, ROOF);
+  shape.quadraticCurveTo(2.42, ROOF, NOSE, 3.12); // roof sweeps down to the screen
   shape.lineTo(NOSE, 0.4);
   shape.closePath();
+  return shape;
+}
+
+/** Rounded rectangle centred on the origin, in the shape's own XY plane. */
+function roundedRect(w: number, h: number, r: number) {
+  const x = w / 2;
+  const y = h / 2;
+  const shape = new THREE.Shape();
+  shape.moveTo(-x + r, -y);
+  shape.lineTo(x - r, -y);
+  shape.quadraticCurveTo(x, -y, x, -y + r);
+  shape.lineTo(x, y - r);
+  shape.quadraticCurveTo(x, y, x - r, y);
+  shape.lineTo(-x + r, y);
+  shape.quadraticCurveTo(-x, y, -x, y - r);
+  shape.lineTo(-x, -y + r);
+  shape.quadraticCurveTo(-x, -y, -x + r, -y);
   return shape;
 }
 
@@ -112,58 +143,107 @@ export function proceduralTruck(palette: ScenePalette): SceneAsset {
   }
   addBox([0.5, 0.34, 1.5], [-0.35, 1.05, 0], fill, edgeDim); // fifth wheel
 
+  /** Rounded panel standing on the front face, facing +X. */
+  const facePanel = (
+    w: number,
+    h: number,
+    r: number,
+    thickness: number,
+    at: [number, number, number],
+    material: THREE.Material = fill,
+    outline = edge,
+  ) => {
+    const geometry = new THREE.ExtrudeGeometry(roundedRect(w, h, r), {
+      depth: thickness,
+      bevelEnabled: false,
+      curveSegments: 4,
+    });
+    geometry.rotateY(Math.PI / 2);
+    geometry.translate(...at);
+    group.add(new THREE.Mesh(geometry, material), edgesFor(geometry, outline));
+  };
+
+  /** Slab with a rounded plan, extruded upward — bumpers, spoilers, visors. */
+  const planSlab = (
+    depth: number,
+    width: number,
+    r: number,
+    height: number,
+    at: [number, number, number],
+    material: THREE.Material = fill,
+    outline = edge,
+  ) => {
+    const geometry = new THREE.ExtrudeGeometry(roundedRect(depth, width, r), {
+      depth: height,
+      bevelEnabled: false,
+      curveSegments: 5,
+    });
+    geometry.rotateX(-Math.PI / 2);
+    geometry.translate(...at);
+    group.add(new THREE.Mesh(geometry, material), edgesFor(geometry, outline));
+  };
+
   // --- Cab shell ---------------------------------------------------------
+  // Bevelled extrusion: the bevel runs along the extrusion caps, which are the
+  // cab's left and right sides, so it rounds every vertical corner where the
+  // front face meets a flank. That chamfer plus the curved roof profile is what
+  // takes the front away from a plain rectangle.
   const cabGeometry = new THREE.ExtrudeGeometry(cabProfile(), {
-    depth: HALF_W * 2,
-    bevelEnabled: false,
+    depth: HALF_W * 2 - CAB_BEVEL * 2,
+    bevelEnabled: true,
+    bevelSegments: 3,
+    bevelSize: CAB_BEVEL,
+    bevelThickness: CAB_BEVEL,
+    curveSegments: 3,
   });
-  cabGeometry.translate(0, 0, -HALF_W);
-  group.add(new THREE.Mesh(cabGeometry, fill), edgesFor(cabGeometry, edge));
+  cabGeometry.translate(0, 0, -(HALF_W - CAB_BEVEL));
+  // A 20° threshold keeps a contour line on each chamfer and roof facet. Higher
+  // and the rounding renders as an unlit grey blob with no outline at all.
+  group.add(new THREE.Mesh(cabGeometry, fill), edgesFor(cabGeometry, edge, 20));
 
-  // Roof spoiler, with marker lights along its leading edge.
-  addBox([2.2, 0.17, 2.34], [1.2, ROOF + 0.08, 0], fill, edge);
-  for (const z of [-0.92, -0.31, 0.31, 0.92]) {
-    addBox([0.09, 0.06, 0.16], [2.26, ROOF + 0.14, z], accent, edgeDim);
-  }
-
-  // Sun visor over the screen.
-  addBox([0.18, 0.11, 2.34], [NOSE + 0.04, 3.31, 0], fill, edge);
+  // Roof air deflector, sitting on the flat part of the roof.
+  planSlab(1.6, 2.3, 0.42, 0.22, [0.62, ROOF - 0.02, 0]);
 
   // --- Front face --------------------------------------------------------
-  // Deep windscreen, set high.
-  addPlane([2.18, 0.92], [NOSE + 0.01, 2.78, 0], "x");
+  // Sun visor, with the marker lights along its leading edge — on the R-series
+  // they sit on the screen header, not up on the roof.
+  planSlab(0.26, 2.32, 0.1, 0.13, [FACE + 0.06, 2.99, 0]);
+  for (const z of [-1.0, -0.5, 0, 0.5, 1.0]) {
+    facePanel(0.16, 0.07, 0.03, 0.04, [FACE + 0.16, 3.04, z], accent, edgeDim);
+  }
+
+  // Deep windscreen with rounded corners.
+  facePanel(2.14, 0.94, 0.16, 0.05, [FACE, 2.48, 0], glass, edge);
 
   // Body-colour band under the screen (where the badge would sit).
   group.add(
     lineSegments(
       [
-        NOSE + 0.01, 2.3, -1.09, NOSE + 0.01, 2.3, 1.09,
-        NOSE + 0.01, 1.98, -1.09, NOSE + 0.01, 1.98, 1.09,
+        FACE + 0.02, 1.99, -1.02, FACE + 0.02, 1.99, 1.02,
+        FACE + 0.02, 1.88, -1.02, FACE + 0.02, 1.88, 1.02,
       ],
       edgeDim,
     ),
   );
 
-  // Large slatted grille.
-  addBox([0.07, 0.86, 1.72], [NOSE + 0.02, 1.53, 0], fill, edge);
-  for (const y of [1.24, 1.44, 1.64, 1.84]) {
-    group.add(
-      lineSegments([NOSE + 0.06, y, -0.84, NOSE + 0.06, y, 0.84], edgeDim),
-    );
+  // Large soft-cornered grille.
+  facePanel(1.7, 0.82, 0.17, 0.07, [FACE, 1.44, 0]);
+  for (const y of [1.16, 1.34, 1.53, 1.72]) {
+    group.add(lineSegments([FACE + 0.09, y, -0.8, FACE + 0.09, y, 0.8], edgeDim));
   }
 
-  // Angular headlamp units, OUTBOARD of the grille — the S-series signature.
-  for (const z of [1.03, -1.03]) {
-    addBox([0.09, 0.6, 0.36], [NOSE + 0.03, 1.55, z], accent, edge);
+  // Headlamp units, outboard of the grille and tucked inside the chamfer.
+  for (const z of [0.98, -0.98]) {
+    facePanel(0.3, 0.56, 0.09, 0.06, [FACE, 1.5, z], accent, edge);
   }
 
-  // Deep, stepped bumper with lower valance and inset fog lamps.
-  addBox([0.24, 0.72, 2.5], [NOSE + 0.1, 0.7, 0], fill, edge);
-  addBox([0.16, 0.22, 2.4], [NOSE + 0.06, 0.26, 0], fill, edgeDim);
+  // Deep bumper with rounded ends that wrap toward the flanks.
+  planSlab(0.34, 2.5, 0.17, 0.74, [FACE + 0.06, 0.32, 0]);
+  planSlab(0.24, 2.4, 0.13, 0.2, [FACE + 0.02, 0.13, 0], fill, edgeDim);
   for (const z of [0.92, -0.92]) {
-    addBox([0.07, 0.17, 0.34], [NOSE + 0.23, 0.62, z], accent, edgeDim);
+    facePanel(0.34, 0.17, 0.06, 0.04, [FACE + 0.22, 0.62, z], accent, edgeDim);
   }
-  addBox([0.08, 0.34, 0.72], [NOSE + 0.23, 0.66, 0], fill, edgeDim); // centre plate
+  facePanel(0.72, 0.3, 0.09, 0.04, [FACE + 0.22, 0.66, 0], fill, edgeDim);
 
   // --- Cab sides ---------------------------------------------------------
   for (const z of [HALF_W + 0.005, -(HALF_W + 0.005)]) {

@@ -69,9 +69,23 @@ export function accentFill(palette: ScenePalette) {
   return material;
 }
 
-/** Wraps a geometry's hard edges in outlines, drawn after the panels. */
-export function edgesFor(geometry: THREE.BufferGeometry, material: THREE.LineBasicMaterial) {
-  const lines = new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 22), material);
+/**
+ * Wraps a geometry's hard edges in outlines, drawn after the panels.
+ *
+ * `threshold` is the angle in degrees above which an edge is drawn. It matters
+ * for chamfered and curved bodywork: too high and the rounding renders as an
+ * unlit grey blob with no contour at all, since nothing here is shaded and the
+ * outlines are the only thing describing the form.
+ */
+export function edgesFor(
+  geometry: THREE.BufferGeometry,
+  material: THREE.LineBasicMaterial,
+  threshold = 22,
+) {
+  const lines = new THREE.LineSegments(
+    new THREE.EdgesGeometry(geometry, threshold),
+    material,
+  );
   lines.renderOrder = EDGE_RENDER_ORDER;
   return lines;
 }
