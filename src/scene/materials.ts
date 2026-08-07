@@ -127,9 +127,6 @@ export function applyPalette(materials: THREE.Material[], palette: ScenePalette)
     } else if (kind === "grid") {
       line.color.copy(palette.grid);
       line.opacity = palette.gridOpacity;
-    } else if (kind === "route") {
-      line.color.copy(palette.lineDim);
-      line.opacity = palette.lineOpacity * 0.5;
     }
     material.needsUpdate = true;
   }

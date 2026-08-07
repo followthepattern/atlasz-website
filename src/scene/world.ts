@@ -4,6 +4,7 @@ import type { QualitySettings } from "./quality";
 import { applyPalette, disposeObject, edgeMaterial } from "./materials";
 import { proceduralTruck } from "./assets/truck";
 import { proceduralWarehouse } from "./assets/warehouse";
+import { proceduralTrees, type TreePlacement } from "./assets/trees";
 import type { SceneAsset } from "./assets/types";
 
 /* The route is the authority on layout. The truck is placed ON the curve and
@@ -35,6 +36,20 @@ const PULL_IN_FROM = 0.78;
 
 const GRID_SIZE = 460;
 const GRID_STEP = 8;
+
+/* Treeline. It exists to make the truck's travel legible — an empty ground
+   plane gives the eye nothing to measure motion against. */
+const TREES_FROM = 0.18;
+const TREES_TO = 0.78;
+const TREE_SPACING = 17; // metres of arc between rows
+/**
+ * Distance from the centreline before jitter. This has to clear the camera's
+ * own lateral offset — the rig swings up to ~12 m to the side at the hero
+ * framing, and a verge inside that plants trees directly in front of the lens,
+ * where one conifer can blot out the entire headline.
+ */
+const TREE_VERGE = 18;
+const TREE_SPREAD = 16; // extra metres of scatter beyond the verge
 
 function smoothstep(t: number) {
   const c = Math.min(1, Math.max(0, t));
@@ -71,23 +86,52 @@ function buildGrid(material: THREE.LineBasicMaterial) {
   return new THREE.LineSegments(geometry, material);
 }
 
-function buildRoute(material: THREE.LineBasicMaterial) {
-  const centre = ROUTE.getPoints(220);
-  const group = new THREE.Group();
-  group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(centre), material));
+/* Deterministic PRNG, so the treeline is identical on every load. Math.random
+   here would reshuffle the scenery between reloads and between screenshots. */
+function mulberry32(seed: number) {
+  let a = seed;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
-  for (const offset of [4.5, -4.5]) {
-    const edge = centre.map((point, i) => {
-      const heading = headingAt(Math.min(1, i / (centre.length - 1)));
-      return new THREE.Vector3(
-        point.x + Math.sin(heading) * offset,
-        point.y,
-        point.z + Math.cos(heading) * offset,
-      );
-    });
-    group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(edge), material));
+/** Trees down both verges, spaced along the route by arc length. */
+function treePlacements(): TreePlacement[] {
+  const random = mulberry32(0x5ca17a);
+  const placements: TreePlacement[] = [];
+  const length = ROUTE.getLength();
+  const step = TREE_SPACING / length;
+
+  for (let t = TREES_FROM; t <= TREES_TO; t += step) {
+    const point = ROUTE.getPointAt(t);
+    const heading = headingAt(t);
+
+    for (const sign of [1, -1]) {
+      // Leave the frontage clear where the facility meets the road.
+      if (sign > 0 && Math.abs(t - WAREHOUSE_AT) < 0.055) continue;
+      if (random() < 0.18) continue; // gaps, so the line is not a fence
+
+      const offset = sign * (TREE_VERGE + random() * TREE_SPREAD);
+      const jitter = (random() - 0.5) * TREE_SPACING * 0.6;
+
+      placements.push({
+        position: new THREE.Vector3(
+          point.x + Math.sin(heading) * offset + Math.cos(heading) * jitter,
+          0,
+          point.z + Math.cos(heading) * offset - Math.sin(heading) * jitter,
+        ),
+        scale: 0.7 + random() * 0.6,
+        rotation: random() * Math.PI * 2,
+        conifer: random() < 0.55,
+      });
+    }
   }
-  return group;
+
+  return placements;
 }
 
 /** Live pose of the vehicle the camera is following. Mutated every frame. */
@@ -119,14 +163,11 @@ export function createWorld(palette: ScenePalette, quality: QualitySettings): Wo
   materials.push(gridMaterial);
   scene.add(buildGrid(gridMaterial));
 
-  const routeMaterial = edgeMaterial(palette, true);
-  routeMaterial.userData.kind = "route";
-  routeMaterial.opacity = palette.lineOpacity * 0.5;
-  materials.push(routeMaterial);
-  scene.add(buildRoute(routeMaterial));
-
   const truck = proceduralTruck(palette);
   scene.add(truck.object3D);
+
+  const trees = proceduralTrees(palette, treePlacements());
+  scene.add(trees.object3D);
 
   const warehouse = proceduralWarehouse(palette, quality.rackCount);
   placeOnRoute(warehouse.object3D, WAREHOUSE_AT, WAREHOUSE_OFFSET);
@@ -148,7 +189,7 @@ export function createWorld(palette: ScenePalette, quality: QualitySettings): Wo
 
   driveTo(0);
 
-  const assets: SceneAsset[] = [truck, warehouse];
+  const assets: SceneAsset[] = [truck, warehouse, trees];
 
   return {
     scene,

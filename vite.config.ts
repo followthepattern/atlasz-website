@@ -13,6 +13,11 @@ export default defineConfig({
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
     },
+    // Anything imported from three/examples gets pre-bundled by Vite with its
+    // own copy of three, which yields "Multiple instances of Three.js being
+    // imported" and helpers that operate on foreign classes. It only shows up
+    // in dev — the production bundle resolves to a single copy either way.
+    dedupe: ["three"],
   },
   server: {
     host: true,
