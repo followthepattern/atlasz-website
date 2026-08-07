@@ -1,4 +1,8 @@
 {
+  "meta": {
+    "title": "atlasz — AI powered Transport Management System",
+    "description": "atlasz — AI powered Transport Management System. Bring your fleet, routes, and freight into one intelligent workspace. Join the early access list."
+  },
   "language": {
     "en": "English",
     "hu": "Magyar",
@@ -10,6 +14,22 @@
     "titleLine2": "Transport Management System.",
     "subtitle": "atlasz brings your fleet, routes, and freight into one intelligent workspace. Answer a few quick questions and we'll be in touch.",
     "cta": "Take atlasz for a test drive"
+  },
+  "mapHero": {
+    "status": {
+      "enRoute": "En route",
+      "loading": "Loading"
+    },
+    "metrics": {
+      "eta": "ETA",
+      "cargo": "Cargo",
+      "speed": "Speed"
+    },
+    "metricValues": {
+      "eta": "1h 12m",
+      "cargo": "18.4 t",
+      "speed": "82 km/h"
+    }
   },
   "features": {
     "eyebrow": "What atlasz does",
@@ -72,6 +92,13 @@
       "driver": "Driver",
       "other": "Other"
     },
+    "routes": {
+      "bud-vie": { "from": "Budapest", "to": "Vienna" },
+      "deb-krk": { "from": "Debrecen", "to": "Kraków" },
+      "sze-muc": { "from": "Szeged", "to": "Munich" },
+      "gyo-mil": { "from": "Győr", "to": "Milan" }
+    },
+    "donutSummary": "cost {{cost}} of {{income}} income",
     "tabs": {
       "economics": "Cost & income per route",
       "chat": "AI assistant",
