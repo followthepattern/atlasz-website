@@ -1,54 +1,62 @@
 import * as THREE from "three";
 
 /* The site is dark-first but light mode is reachable via
-   localStorage['atlasz-theme'] (see index.html). Glowing wireframes on white
-   look broken, so the scene carries a real light palette: darker lines, no
-   additive blending, denser fog. */
+   localStorage['atlasz-theme'] (see index.html), so the scene carries a real
+   palette for each.
+
+   No additive blending and no emissive accents: the scene reads as a precise
+   technical drawing in both themes, not a hologram. */
 export type ScenePalette = {
   line: THREE.Color;
   lineDim: THREE.Color;
+  /** Lamps and trim. A material colour, not a light source. */
   accent: THREE.Color;
   fill: THREE.Color;
+  /** Windscreen and side windows — darker than the body in both themes. */
+  glass: THREE.Color;
   grid: THREE.Color;
   particle: THREE.Color;
   fog: THREE.Color;
-  /** Additive blending only survives on a dark canvas. */
-  additive: boolean;
   fillOpacity: number;
   lineOpacity: number;
+  glassOpacity: number;
+  particleOpacity: number;
   fogDensity: number;
 };
 
 export const DARK_PALETTE: ScenePalette = {
-  line: new THREE.Color(0xd6ebff),
-  lineDim: new THREE.Color(0x5b7f9c),
-  accent: new THREE.Color(0x38bdf8),
+  line: new THREE.Color(0x9fb3c4),
+  lineDim: new THREE.Color(0x4a5d6e),
+  accent: new THREE.Color(0xc4d2dd),
   // Slightly lighter than the page canvas (#18181b) so the body reads as a
-  // solid volume and the bright edges have something to sit against.
-  fill: new THREE.Color(0x121a24),
-  grid: new THREE.Color(0x33506a),
-  particle: new THREE.Color(0x6cc6f5),
+  // solid volume rather than a hole in the page.
+  fill: new THREE.Color(0x1c2530),
+  glass: new THREE.Color(0x2b3947),
+  grid: new THREE.Color(0x2b3644),
+  particle: new THREE.Color(0x62778a),
   fog: new THREE.Color(0x18181b),
-  additive: true,
-  fillOpacity: 0.72,
-  lineOpacity: 1,
-  fogDensity: 0.016,
+  fillOpacity: 0.92,
+  lineOpacity: 0.85,
+  glassOpacity: 0.75,
+  particleOpacity: 0.4,
+  fogDensity: 0.015,
 };
 
 export const LIGHT_PALETTE: ScenePalette = {
-  line: new THREE.Color(0x1b2c3c),
-  lineDim: new THREE.Color(0x7e97ab),
-  accent: new THREE.Color(0x0284c7),
-  fill: new THREE.Color(0xe9eff5),
-  grid: new THREE.Color(0xaebecd),
-  particle: new THREE.Color(0x0284c7),
+  line: new THREE.Color(0x2c3e4f),
+  lineDim: new THREE.Color(0x8ea2b2),
+  accent: new THREE.Color(0x5c6f7e),
+  fill: new THREE.Color(0xeef3f7),
+  glass: new THREE.Color(0xd2dee7),
+  grid: new THREE.Color(0xc2cfda),
+  particle: new THREE.Color(0x8698a7),
   fog: new THREE.Color(0xffffff),
-  additive: false,
-  // A near-opaque fill and full-strength lines: on white there is no glow to
-  // carry the shape, so the drawing has to do all the work.
-  fillOpacity: 0.9,
+  // On white there is no glow to carry the shape, so the drawing does the work.
+  fillOpacity: 0.95,
   lineOpacity: 1,
-  fogDensity: 0.012,
+  glassOpacity: 0.85,
+  particleOpacity: 0.45,
+  fogDensity: 0.011,
 };
 
 export function paletteForDocument(): ScenePalette {

@@ -7,16 +7,45 @@ import { proceduralWarehouse } from "./assets/warehouse";
 import { proceduralParticles } from "./assets/particles";
 import type { SceneAsset } from "./assets/types";
 
-/* World layout, in metres:
-     truck      at the origin, facing +X
-     warehouse  90 m ahead, rotated so its dock faces the approaching truck
-     route      a ground line running through both
-   The camera rig reads every position from `anchors` rather than these
-   numbers, so moving a building does not silently break the choreography. */
+/* The route is the authority on layout. The truck and the warehouse are placed
+   ON the curve and rotated to its tangent — the first version pinned the truck
+   to the +X axis while the road drifted in Z, so it sat visibly askew to its
+   own route. Nothing here hardcodes a vehicle position any more. */
 
-const WAREHOUSE_POSITION = new THREE.Vector3(90, 0, 8);
-const GRID_SIZE = 420;
+const ROUTE = new THREE.CatmullRomCurve3([
+  new THREE.Vector3(-150, 0.05, -8),
+  new THREE.Vector3(-70, 0.05, -3),
+  new THREE.Vector3(0, 0.05, 0),
+  new THREE.Vector3(70, 0.05, 5),
+  new THREE.Vector3(150, 0.05, 12),
+  new THREE.Vector3(230, 0.05, 20),
+]);
+
+const TRUCK_AT = 0.44;
+const WAREHOUSE_AT = 0.68;
+const WAREHOUSE_OFFSET = 26; // metres to the side of the carriageway
+
+const GRID_SIZE = 460;
 const GRID_STEP = 8;
+
+/** Heading that points an asset's local +X along the route at `t`. */
+function headingAt(t: number) {
+  const tangent = ROUTE.getTangentAt(t);
+  return Math.atan2(-tangent.z, tangent.x);
+}
+
+/** Places an object on the route, facing along it. */
+function placeOnRoute(object: THREE.Object3D, t: number, sideOffset = 0) {
+  const point = ROUTE.getPointAt(t);
+  const heading = headingAt(t);
+  // Perpendicular to the tangent in the ground plane.
+  object.position.set(
+    point.x + Math.sin(heading) * sideOffset,
+    0,
+    point.z + Math.cos(heading) * sideOffset,
+  );
+  object.rotation.y = heading;
+}
 
 function buildGrid(material: THREE.LineBasicMaterial) {
   const points: number[] = [];
@@ -31,16 +60,24 @@ function buildGrid(material: THREE.LineBasicMaterial) {
 }
 
 function buildRoute(material: THREE.LineBasicMaterial) {
-  const curve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(-140, 0.06, -6),
-    new THREE.Vector3(-60, 0.06, -2),
-    new THREE.Vector3(0, 0.06, 0),
-    new THREE.Vector3(45, 0.06, 4),
-    new THREE.Vector3(90, 0.06, 8),
-    new THREE.Vector3(170, 0.06, 14),
-  ]);
-  const geometry = new THREE.BufferGeometry().setFromPoints(curve.getPoints(180));
-  return new THREE.Line(geometry, material);
+  const centre = ROUTE.getPoints(220);
+  const geometry = new THREE.BufferGeometry().setFromPoints(centre);
+  const group = new THREE.Group();
+  group.add(new THREE.Line(geometry, material));
+
+  // Carriageway edges, so the route reads as a road rather than a stray line.
+  for (const offset of [4.5, -4.5]) {
+    const edge = centre.map((point, i) => {
+      const heading = headingAt(Math.min(1, i / (centre.length - 1)));
+      return new THREE.Vector3(
+        point.x + Math.sin(heading) * offset,
+        point.y,
+        point.z + Math.cos(heading) * offset,
+      );
+    });
+    group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(edge), material));
+  }
+  return group;
 }
 
 export type World = {
@@ -60,28 +97,29 @@ export function createWorld(palette: ScenePalette, quality: QualitySettings): Wo
   const gridMaterial = edgeMaterial(palette, true);
   gridMaterial.userData.kind = "grid";
   gridMaterial.color.copy(palette.grid);
-  gridMaterial.opacity = 0.42;
+  gridMaterial.opacity = 0.35;
   materials.push(gridMaterial);
   scene.add(buildGrid(gridMaterial));
 
-  const routeMaterial = edgeMaterial(palette);
-  routeMaterial.userData.kind = "accent";
-  routeMaterial.color.copy(palette.accent);
+  const routeMaterial = edgeMaterial(palette, true);
+  routeMaterial.userData.kind = "route";
   materials.push(routeMaterial);
   scene.add(buildRoute(routeMaterial));
 
   const truck = proceduralTruck(palette);
+  placeOnRoute(truck.object3D, TRUCK_AT);
   scene.add(truck.object3D);
 
   const warehouse = proceduralWarehouse(palette, quality.rackCount);
-  warehouse.object3D.position.copy(WAREHOUSE_POSITION);
-  warehouse.object3D.rotation.y = Math.PI; // dock faces the approaching truck
+  placeOnRoute(warehouse.object3D, WAREHOUSE_AT, WAREHOUSE_OFFSET);
+  // Turn the dock to face the carriageway the truck is arriving on.
+  warehouse.object3D.rotation.y += Math.PI / 2;
   scene.add(warehouse.object3D);
 
-  // Anchors must be resolved in world space, after placement and rotation —
-  // otherwise the warehouse's local +X dock lands on the wrong side.
-  warehouse.object3D.updateMatrixWorld(true);
+  // Anchors resolve in world space, after placement and rotation — otherwise
+  // the warehouse's local +X dock lands on the wrong side.
   truck.object3D.updateMatrixWorld(true);
+  warehouse.object3D.updateMatrixWorld(true);
 
   const toWorld = (asset: SceneAsset, key: string) =>
     asset.object3D.localToWorld(asset.anchorPoints[key].clone());
@@ -113,9 +151,7 @@ export function createWorld(palette: ScenePalette, quality: QualitySettings): Wo
     anchors,
     setPalette(next) {
       applyPalette(materials, next);
-      gridMaterial.color.copy(next.grid);
-      gridMaterial.opacity = 0.42;
-      routeMaterial.color.copy(next.accent);
+      gridMaterial.opacity = 0.35;
       for (const asset of assets) asset.setPalette(next);
       const fog = scene.fog as THREE.FogExp2;
       fog.color.copy(next.fog);

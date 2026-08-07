@@ -5,7 +5,7 @@ import {
   disposeObject,
   edgeMaterial,
   edgesFor,
-  hologramFill,
+  panelFill,
   EDGE_RENDER_ORDER,
 } from "../materials";
 import type { SceneAsset } from "./types";
@@ -26,7 +26,7 @@ export function proceduralWarehouse(
   const group = new THREE.Group();
   const materials: THREE.Material[] = [];
 
-  const fill = hologramFill(palette);
+  const fill = panelFill(palette);
   const edge = edgeMaterial(palette);
   const edgeDim = edgeMaterial(palette, true);
   materials.push(fill, edge, edgeDim);

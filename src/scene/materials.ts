@@ -1,18 +1,22 @@
 import * as THREE from "three";
 import type { ScenePalette } from "./palette";
 
-/* Everything in the scene is unlit. The hologram look — translucent fill plus
-   bright edges — needs no lights at all, which removes a whole class of
-   shading bugs and keeps the frame cost close to nothing. */
+/* Everything in the scene is unlit. Solid panels plus crisp outlines — a
+   technical drawing, not a hologram. No additive blending anywhere, so the
+   model reads the same way against a dark or a light page. */
 
-export function hologramFill(palette: ScenePalette) {
+/**
+ * Edges and their panels are coplanar, so three's back-to-front sort between
+ * them is a coin flip. Forcing edges to draw last removes the ambiguity; the
+ * panel materials also carry a polygon offset so the depth test agrees.
+ */
+export const EDGE_RENDER_ORDER = 2;
+
+export function panelFill(palette: ScenePalette) {
   const material = new THREE.MeshBasicMaterial({
     color: palette.fill,
     transparent: true,
     opacity: palette.fillOpacity,
-    // Edge lines sit exactly on the surfaces they outline. Without a polygon
-    // offset the two z-fight and the wireframe dissolves into a faint stipple —
-    // which is precisely how this looked before the offset was added.
     polygonOffset: true,
     polygonOffsetFactor: 1,
     polygonOffsetUnits: 1,
@@ -21,78 +25,91 @@ export function hologramFill(palette: ScenePalette) {
   return material;
 }
 
+export function glassFill(palette: ScenePalette) {
+  const material = new THREE.MeshBasicMaterial({
+    color: palette.glass,
+    transparent: true,
+    opacity: palette.glassOpacity,
+    polygonOffset: true,
+    polygonOffsetFactor: 1,
+    polygonOffsetUnits: 1,
+  });
+  material.userData.kind = "glass";
+  return material;
+}
+
 export function edgeMaterial(palette: ScenePalette, dim = false) {
   const material = new THREE.LineBasicMaterial({
     color: dim ? palette.lineDim : palette.line,
     transparent: true,
-    opacity: palette.lineOpacity,
-    blending: palette.additive ? THREE.AdditiveBlending : THREE.NormalBlending,
+    opacity: dim ? palette.lineOpacity * 0.65 : palette.lineOpacity,
     depthWrite: false,
   });
   material.userData.kind = dim ? "edgeDim" : "edge";
   return material;
 }
 
-export function accentMaterial(palette: ScenePalette) {
+export function accentFill(palette: ScenePalette) {
   const material = new THREE.MeshBasicMaterial({
     color: palette.accent,
     transparent: true,
-    opacity: 0.95,
-    blending: palette.additive ? THREE.AdditiveBlending : THREE.NormalBlending,
-    depthWrite: false,
+    opacity: 0.9,
+    polygonOffset: true,
+    polygonOffsetFactor: 1,
+    polygonOffsetUnits: 1,
   });
   material.userData.kind = "accent";
   return material;
 }
 
-/** Wraps a geometry's hard edges in glowing lines. */
+/** Wraps a geometry's hard edges in outlines, drawn after the panels. */
 export function edgesFor(geometry: THREE.BufferGeometry, material: THREE.LineBasicMaterial) {
   const lines = new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 22), material);
   lines.renderOrder = EDGE_RENDER_ORDER;
   return lines;
 }
 
-/**
- * Edges and their fills are transparent and sit at the same depth, so three's
- * back-to-front sort between them is a coin flip. Losing it means the fill
- * paints over the outline it belongs to — invisible under additive blending in
- * dark mode, but it washes the whole model out in light mode. Forcing edges last
- * removes the ambiguity.
- */
-export const EDGE_RENDER_ORDER = 2;
+/** A free-standing set of line segments from raw point pairs. */
+export function lineSegments(points: number[], material: THREE.LineBasicMaterial) {
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(points, 3));
+  const lines = new THREE.LineSegments(geometry, material);
+  lines.renderOrder = EDGE_RENDER_ORDER;
+  return lines;
+}
 
 /**
  * Re-tints every material an asset created, in place. Assets keep a flat list
  * of their materials and hand it here on theme change — no rebuilding, no
  * dropped GPU buffers.
  */
-export function applyPalette(
-  materials: THREE.Material[],
-  palette: ScenePalette,
-) {
+export function applyPalette(materials: THREE.Material[], palette: ScenePalette) {
   for (const material of materials) {
     const kind = material.userData.kind as string | undefined;
-    if (kind === "fill" && material instanceof THREE.MeshBasicMaterial) {
-      material.color.copy(palette.fill);
-      material.opacity = palette.fillOpacity;
-    } else if (kind === "edge" && material instanceof THREE.LineBasicMaterial) {
-      material.color.copy(palette.line);
-      material.opacity = palette.lineOpacity;
-      material.blending = palette.additive ? THREE.AdditiveBlending : THREE.NormalBlending;
-    } else if (kind === "edgeDim" && material instanceof THREE.LineBasicMaterial) {
-      material.color.copy(palette.lineDim);
-      material.opacity = palette.lineOpacity * 0.7;
-      material.blending = palette.additive ? THREE.AdditiveBlending : THREE.NormalBlending;
+    const basic = material as THREE.MeshBasicMaterial;
+    const line = material as THREE.LineBasicMaterial;
+
+    if (kind === "fill") {
+      basic.color.copy(palette.fill);
+      basic.opacity = palette.fillOpacity;
+    } else if (kind === "glass") {
+      basic.color.copy(palette.glass);
+      basic.opacity = palette.glassOpacity;
     } else if (kind === "accent") {
-      const m = material as THREE.MeshBasicMaterial | THREE.LineBasicMaterial;
-      m.color.copy(palette.accent);
-      m.blending = palette.additive ? THREE.AdditiveBlending : THREE.NormalBlending;
+      basic.color.copy(palette.accent);
+    } else if (kind === "edge") {
+      line.color.copy(palette.line);
+      line.opacity = palette.lineOpacity;
+    } else if (kind === "edgeDim") {
+      line.color.copy(palette.lineDim);
+      line.opacity = palette.lineOpacity * 0.65;
+    } else if (kind === "grid") {
+      line.color.copy(palette.grid);
+    } else if (kind === "route") {
+      line.color.copy(palette.lineDim);
     } else if (kind === "particle" && material instanceof THREE.PointsMaterial) {
       material.color.copy(palette.particle);
-      material.blending = palette.additive ? THREE.AdditiveBlending : THREE.NormalBlending;
-    } else if (kind === "grid" && material instanceof THREE.LineBasicMaterial) {
-      material.color.copy(palette.grid);
-      material.blending = palette.additive ? THREE.AdditiveBlending : THREE.NormalBlending;
+      material.opacity = palette.particleOpacity;
     }
     material.needsUpdate = true;
   }

@@ -78,7 +78,10 @@ export default function SceneCanvas({ ambient = false, onLost }: SceneCanvasProp
 
     // A permanently mounted canvas rendering at 60fps forever is a laptop
     // killer. Stop entirely while the tab is hidden.
-    let running = true;
+    // Start paused if the page is already in a background tab. Keying only off
+    // the visibilitychange event misses this case entirely: a tab opened in the
+    // background renders (throttled, but continuously) until it is first shown.
+    let running = !document.hidden;
     let frame = 0;
     const timer = new THREE.Timer();
 
@@ -133,7 +136,7 @@ export default function SceneCanvas({ ambient = false, onLost }: SceneCanvasProp
       reveal();
     }
 
-    frame = requestAnimationFrame(loop);
+    if (running) frame = requestAnimationFrame(loop);
 
     return () => {
       running = false;

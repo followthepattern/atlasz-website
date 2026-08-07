@@ -34,12 +34,11 @@ export function proceduralParticles(
 
   const fieldMaterial = new THREE.PointsMaterial({
     color: palette.particle,
-    size: 0.16,
+    size: 0.13,
     sizeAttenuation: true,
     transparent: true,
-    opacity: 0.55,
+    opacity: palette.particleOpacity,
     depthWrite: false,
-    blending: palette.additive ? THREE.AdditiveBlending : THREE.NormalBlending,
   });
   fieldMaterial.userData.kind = "particle";
   materials.push(fieldMaterial);
@@ -62,12 +61,11 @@ export function proceduralParticles(
 
   const streamMaterial = new THREE.PointsMaterial({
     color: palette.particle,
-    size: 0.3,
+    size: 0.22,
     sizeAttenuation: true,
     transparent: true,
-    opacity: 0.9,
+    opacity: Math.min(1, palette.particleOpacity * 1.6),
     depthWrite: false,
-    blending: palette.additive ? THREE.AdditiveBlending : THREE.NormalBlending,
   });
   streamMaterial.userData.kind = "particle";
   materials.push(streamMaterial);
