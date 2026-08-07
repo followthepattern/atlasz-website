@@ -139,11 +139,11 @@ html.lenis body {
    and faded out well before the vehicle so it never reads as a panel edge. */
 .hero-scrim {
   background: linear-gradient(
-    to right,
-    color-mix(in oklab, var(--canvas) 88%, transparent) 0%,
-    color-mix(in oklab, var(--canvas) 74%, transparent) 30%,
-    color-mix(in oklab, var(--canvas) 34%, transparent) 48%,
-    transparent 60%
+    to bottom,
+    color-mix(in oklab, var(--canvas) 84%, transparent) 0%,
+    color-mix(in oklab, var(--canvas) 62%, transparent) 30%,
+    color-mix(in oklab, var(--canvas) 22%, transparent) 52%,
+    transparent 68%
   );
 }
 

@@ -51,12 +51,15 @@ function buildFramings(anchors: Record<string, THREE.Vector3>): Framing[] {
     base.clone().add(new THREE.Vector3(x, y, z));
 
   return [
-    // Hero — low three-quarter ahead of the cab, truck held to the right of
-    // frame so the headline column stays clear.
+    // Hero — low three-quarter ahead of the cab. The look target is centred on
+    // the vehicle and lifted above it, which holds the truck in the middle of
+    // frame and low, leaving the upper band to the headline. Only the look
+    // target moves; `offset` sets the bearing, so the single-crossing sweep is
+    // unaffected by this framing choice.
     {
       at: 0,
       offset: from(cab, 16, 2.2, 12),
-      lookOffset: from(cab, -4.2, 0.3, 5.6),
+      lookOffset: from(trailer, 3, 3.4, 0),
     },
     // From here down the page is dense with copy and cards, so every framing
     // stands well back. Close framings put the truck and the warehouse straight

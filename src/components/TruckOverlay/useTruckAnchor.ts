@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { truckScreen } from "@/scene/truckScreen";
+import { useScrollStore } from "@/motion/ScrollProvider";
 
 /**
  * Peak opacity for the floating readouts. Stacking order alone is not enough to
@@ -14,6 +15,27 @@ const OFFSET_X = 250;
 const EDGE_MARGIN = 24;
 
 /**
+ * The readouts belong to the opening and the arrival, not to the middle of the
+ * page. Through the sections in between there is dense copy to read and the
+ * instrumentation would only sit on top of it, so it fades out once the second
+ * section arrives and comes back for the last one.
+ */
+const HERO_HOLD = 0.1;
+const HERO_GONE = 0.19;
+const FINAL_RETURN = 0.8;
+const FINAL_HOLD = 0.89;
+
+function scrollFade(progress: number) {
+  if (progress <= HERO_HOLD) return 1;
+  if (progress < HERO_GONE) return 1 - (progress - HERO_HOLD) / (HERO_GONE - HERO_HOLD);
+  if (progress < FINAL_RETURN) return 0;
+  if (progress < FINAL_HOLD) {
+    return (progress - FINAL_RETURN) / (FINAL_HOLD - FINAL_RETURN);
+  }
+  return 1;
+}
+
+/**
  * Pins an element to the truck's projected screen position.
  *
  * Applied once, to the group that holds every readout, so they travel as a
@@ -26,18 +48,27 @@ const EDGE_MARGIN = 24;
  */
 export function useTruckAnchor<T extends HTMLElement>() {
   const ref = useRef<T>(null);
+  const scroll = useScrollStore();
 
   useEffect(() => {
     // Measured once. Reading layout inside the subscriber would force a reflow
     // on every frame, which is the one thing this whole approach avoids.
     let width = 0;
+    let onScreen = false;
+    let progress = scroll.get();
 
-    return truckScreen.subscribe(({ x, y, visible }) => {
+    const applyOpacity = () => {
+      const element = ref.current;
+      if (!element) return;
+      element.style.opacity = onScreen ? String(AMBIENT_OPACITY * scrollFade(progress)) : "0";
+    };
+
+    const stopPosition = truckScreen.subscribe(({ x, y, visible }) => {
       const element = ref.current;
       if (!element) return;
       if (!width) width = element.offsetWidth;
-
-      element.style.opacity = visible ? String(AMBIENT_OPACITY) : "0";
+      onScreen = visible;
+      applyOpacity();
 
       // Offset clear of the cab, then clamped so the cluster cannot slide off
       // the right edge when the camera carries the truck across the frame.
@@ -48,7 +79,19 @@ export function useTruckAnchor<T extends HTMLElement>() {
       // must never trigger layout.
       element.style.transform = `translate3d(${Math.round(tx)}px, ${Math.round(y)}px, 0)`;
     });
-  }, []);
+
+    // Scroll is its own signal: the scene keeps rendering while the page sits
+    // still, so the fade cannot be driven off the position feed alone.
+    const stopScroll = scroll.subscribe((next) => {
+      progress = next;
+      applyOpacity();
+    });
+
+    return () => {
+      stopPosition();
+      stopScroll();
+    };
+  }, [scroll]);
 
   return ref;
 }
@@ -63,7 +106,7 @@ export function useTruckAnchor<T extends HTMLElement>() {
  * which is exactly right.
  */
 export const FLOATING_SHELL =
-  "pointer-events-none fixed left-0 top-0 z-[-5] hidden opacity-0 transition-opacity duration-500 lg:block";
+  "pointer-events-none fixed left-0 top-0 z-[-5] hidden opacity-0 transition-opacity duration-300 lg:block";
 
 /**
  * The cluster sits to the right of the truck. The page's copy is left-aligned

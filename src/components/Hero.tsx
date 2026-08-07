@@ -27,10 +27,14 @@ export function Hero({ onHome, onStart }: HeroProps) {
 
   return (
     <section className="relative flex min-h-[92vh] flex-col overflow-hidden">
-      {/* Sits above the canvas and the floating readouts (both negative z) and
-          below the copy at z-10, so the headline keeps its contrast whatever
-          the scene is doing behind it. */}
-      <div className="hero-scrim pointer-events-none absolute inset-0" aria-hidden="true" />
+      {/* Layered at -6: above the canvas at -10, below the floating readouts at
+          -5, and far below the copy at z-10. It has to dim the scene without
+          dimming the instruments — sitting in normal flow it painted over them
+          and washed them out. */}
+      <div
+        className="hero-scrim pointer-events-none absolute inset-0 z-[-6]"
+        aria-hidden="true"
+      />
 
       <header className="relative z-10 mx-auto flex w-full max-w-5xl items-center justify-between px-6 pt-8">
         <button
@@ -43,42 +47,42 @@ export function Hero({ onHome, onStart }: HeroProps) {
         <LanguageSwitcher />
       </header>
 
+      {/* Copy sits in the upper band, centred, with the truck framed below it. */}
       <div
         ref={ref}
-        className="relative z-10 mx-auto flex w-full max-w-5xl flex-1 flex-col justify-center px-6 py-20"
+        className="relative z-10 mx-auto flex w-full max-w-5xl flex-col items-center px-6 pt-14 text-center sm:pt-20"
       >
-        <div className="flex max-w-2xl flex-col items-start gap-6">
+        {/* One pool behind the whole block. Scrimming only part of it left the
+            title and the subtitle sitting on visibly different backgrounds, as
+            though they belonged to different elements. */}
+        <div className="relative flex w-full flex-col items-center gap-6">
+          <div
+            className="ambient-scrim pointer-events-none absolute -inset-x-8 -inset-y-7"
+            aria-hidden="true"
+          />
+
           <span
             data-reveal
-            className="glass rounded-full px-3 py-1 text-xs tracking-wide text-muted"
+            className="glass relative rounded-full px-3 py-1 text-xs tracking-wide text-muted"
           >
             {t("hero.badge")}
           </span>
 
-          <h1 className="text-4xl font-semibold leading-[1.05] tracking-tight text-fg sm:text-6xl">
-            <SplitText text={t("hero.titleLine1")} immediate className="block" />
+          {/* A single run rather than two stacked lines — sized so it holds one
+              line on a desktop viewport in both languages. */}
+          <h1 className="relative max-w-5xl text-3xl font-semibold leading-[1.12] tracking-tight text-fg sm:text-4xl lg:text-[2.6rem]">
             <SplitText
-              text={t("hero.titleLine2")}
+              text={`${t("hero.titleLine1")} ${t("hero.titleLine2")}`}
               immediate
-              delay={0.12}
-              className="block text-muted"
             />
           </h1>
 
-          {/* The same local pool the floating chart uses. The headline is white
-              and heavy enough to carry itself on the broad hero fade alone; the
-              subtitle is muted body colour at body size, and the scene's grid
-              lines run straight through it. */}
-          <div data-reveal className="relative max-w-xl">
-            <div
-              className="ambient-scrim pointer-events-none absolute -inset-x-5 -inset-y-3"
-              aria-hidden="true"
-            />
-            <Text className="relative text-base">{t("hero.subtitle")}</Text>
-          </div>
+          <Text data-reveal className="relative max-w-2xl text-base">
+            {t("hero.subtitle")}
+          </Text>
 
-          <div data-reveal>
-            <Button variant="primary" onClick={onStart} className="mt-2">
+          <div data-reveal className="relative">
+            <Button variant="primary" onClick={onStart}>
               {t("hero.cta")}
               <ArrowRight className="h-4 w-4" />
             </Button>
