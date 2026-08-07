@@ -1,27 +1,66 @@
+import { useEffect, useState } from "react";
+import { useScrollStore } from "@/motion/ScrollProvider";
 import { RouteTelemetry } from "./RouteTelemetry";
 import { MonthlyPerformance } from "./MonthlyPerformance";
-import { FLOATING_GROUP, FLOATING_SHELL, useTruckAnchor } from "./useTruckAnchor";
+import { FLOATING_SHELL, useTruckAnchor } from "./useTruckAnchor";
+
+/** Where the arrangement changes. Sits inside the band where the readouts are
+    faded out entirely, so the switch is never seen happening. */
+const SPLIT_BELOW = 0.5;
 
 /**
- * Instrumentation that rides with the truck: what the vehicle is doing right
- * now, and how the months are running.
+ * Instrumentation that rides with the truck.
  *
- * Anchored once, as a group. Each readout used to pin itself, which let them
- * drift apart the moment one was positioned differently from the other — the
- * chart held to the viewport edge while the card tracked the vehicle. Both
- * belong to the same cluster and travel together.
+ * Two arrangements, because the two moments frame the vehicle differently. The
+ * hero is near side-on and the truck spans the middle of the frame, so the
+ * readouts sit either side of it. By the arrival the camera has pulled back and
+ * swung round; the truck is small and left of centre, so they stack together on
+ * the right.
  *
- * The cluster sits behind the page content: it is ambient, and must not compete
- * with the copy it drifts across.
+ * One anchor either way — both readouts position from a single zero-size point,
+ * which is what stops them drifting apart the way they did when each pinned
+ * itself.
  */
 export function TruckOverlay() {
   const groupRef = useTruckAnchor<HTMLDivElement>();
+  const scroll = useScrollStore();
+  const [split, setSplit] = useState(() => scroll.get() < SPLIT_BELOW);
+
+  useEffect(() => {
+    // Only re-render on an actual change of arrangement. Setting state from
+    // every scroll frame would put a React render in the animation loop.
+    let current = scroll.get() < SPLIT_BELOW;
+    setSplit(current);
+
+    return scroll.subscribe((progress) => {
+      const next = progress < SPLIT_BELOW;
+      if (next === current) return;
+      current = next;
+      setSplit(next);
+    });
+  }, [scroll]);
 
   return (
     <div ref={groupRef} aria-hidden="true" className={FLOATING_SHELL}>
-      <div className={FLOATING_GROUP}>
-        <RouteTelemetry />
-        <MonthlyPerformance />
+      <div className="relative h-0 w-0">
+        {split ? (
+          <>
+            {/* Equal gaps either side of the vehicle's centre. They must clear
+                a full-length semi seen square on, and stay in step with
+                LEFT_REACH / RIGHT_REACH, which clamp the anchor. */}
+            <div className="absolute right-[400px] top-0 w-[260px] -translate-y-1/2">
+              <RouteTelemetry />
+            </div>
+            <div className="absolute left-[400px] top-0 w-[260px] -translate-y-1/2">
+              <MonthlyPerformance />
+            </div>
+          </>
+        ) : (
+          <div className="absolute left-[210px] top-0 flex w-[300px] -translate-y-1/2 flex-col gap-5">
+            <RouteTelemetry />
+            <MonthlyPerformance />
+          </div>
+        )}
       </div>
     </div>
   );

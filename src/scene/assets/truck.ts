@@ -46,7 +46,16 @@ const ROOF = 3.88;
 const WHEEL_RADIUS = 0.56;
 const TRACK = 1.05;
 const FRONT_AXLE = 1.8;
-const AXLES = [FRONT_AXLE, -6.3, -7.6];
+
+/* A full-length European semi-trailer — 13.6 m is the standard box. Derived
+   rather than written out at each call site: the rear doors, underrun bar,
+   mudflaps, ribbing and rear bogie all key off these. */
+const TRAILER_FRONT = -0.6;
+const TRAILER_LENGTH = 13.6;
+const TRAILER_REAR = TRAILER_FRONT - TRAILER_LENGTH;
+const TRAILER_MID = (TRAILER_FRONT + TRAILER_REAR) / 2;
+
+const AXLES = [FRONT_AXLE, TRAILER_REAR + 3.2, TRAILER_REAR + 1.9];
 
 /**
  * Tall and upright, but with the roof sweeping down into the screen header on
@@ -140,7 +149,7 @@ export function proceduralTruck(palette: ScenePalette): SceneAsset {
 
   // --- Chassis -----------------------------------------------------------
   for (const z of [0.82, -0.82]) {
-    addBox([11.4, 0.16, 0.14], [-3.9, 0.86, z], fill, edgeDim);
+    addBox([TRAILER_LENGTH + 3.6, 0.16, 0.14], [TRAILER_MID - 1.1, 0.86, z], fill, edgeDim);
   }
   addBox([0.5, 0.34, 1.5], [-0.35, 1.05, 0], fill, edgeDim); // fifth wheel
 
@@ -303,27 +312,26 @@ export function proceduralTruck(palette: ScenePalette): SceneAsset {
   group.add(new THREE.Mesh(tankGeometry, fill), edgesFor(tankGeometry, edgeDim));
 
   // --- Trailer -----------------------------------------------------------
-  addBox([8.6, 3.0, 2.55], [-4.9, 2.5, 0]);
+  addBox([TRAILER_LENGTH, 3.0, 2.55], [TRAILER_MID, 2.5, 0]);
 
   const ribPoints: number[] = [];
-  for (let i = 1; i < 9; i += 1) {
-    const x = -1.1 - i * 0.9;
+  for (let x = TRAILER_FRONT - 1.0; x > TRAILER_REAR + 0.5; x -= 0.95) {
     ribPoints.push(x, 1.05, 1.28, x, 3.95, 1.28);
     ribPoints.push(x, 1.05, -1.28, x, 3.95, -1.28);
   }
   group.add(lineSegments(ribPoints, edgeDim));
 
   for (const z of [0.63, -0.63]) {
-    addPlane([1.2, 2.76], [-9.21, 2.5, z], "x", fill, edge);
+    addPlane([1.2, 2.76], [TRAILER_REAR - 0.01, 2.5, z], "x", fill, edge);
   }
 
   group.add(
     lineSegments(
       [
-        -9.22, 1.18, 0.28, -9.22, 3.82, 0.28,
-        -9.22, 1.18, -0.28, -9.22, 3.82, -0.28,
-        -9.2, 4.0, 1.27, -0.62, 4.0, 1.27,
-        -9.2, 4.0, -1.27, -0.62, 4.0, -1.27,
+        TRAILER_REAR - 0.02, 1.18, 0.28, TRAILER_REAR - 0.02, 3.82, 0.28,
+        TRAILER_REAR - 0.02, 1.18, -0.28, TRAILER_REAR - 0.02, 3.82, -0.28,
+        TRAILER_REAR, 4.0, 1.27, TRAILER_FRONT, 4.0, 1.27,
+        TRAILER_REAR, 4.0, -1.27, TRAILER_FRONT, 4.0, -1.27,
       ],
       edgeDim,
     ),
@@ -342,17 +350,17 @@ export function proceduralTruck(palette: ScenePalette): SceneAsset {
   // Sized to fill the flank: the trailer runs x -9.2…-0.6 and y 1.0…4.0, so
   // this leaves roughly a half-metre margin all round.
   for (const z of [1.3, -1.3]) {
-    const panel = new THREE.PlaneGeometry(7.4, 2.3);
+    const panel = new THREE.PlaneGeometry(TRAILER_LENGTH - 2.6, 2.3);
     if (z < 0) panel.rotateY(Math.PI); // face outward, so the text is not mirrored
-    panel.translate(-4.9, 2.6, z);
+    panel.translate(TRAILER_MID, 2.6, z);
     const mesh = new THREE.Mesh(panel, decalMaterial);
     mesh.renderOrder = 3; // over the flank ribbing
     group.add(mesh);
   }
 
-  addBox([0.14, 0.12, 2.2], [-9.1, 0.62, 0], fill, edgeDim); // underrun bar
+  addBox([0.14, 0.12, 2.2], [TRAILER_REAR + 0.1, 0.62, 0], fill, edgeDim); // underrun bar
   for (const z of [0.7, -0.7]) {
-    addBox([0.04, 0.5, 0.42], [-8.35, 0.4, z], fill, edgeDim); // mudflaps
+    addBox([0.04, 0.5, 0.42], [TRAILER_REAR + 0.85, 0.4, z], fill, edgeDim); // mudflaps
   }
 
   // --- Wheels ------------------------------------------------------------
@@ -402,9 +410,9 @@ export function proceduralTruck(palette: ScenePalette): SceneAsset {
     anchorPoints: {
       cab: new THREE.Vector3(1.3, 2.3, 0),
       hood: new THREE.Vector3(NOSE + 0.2, 1.7, 0),
-      trailer: new THREE.Vector3(-4.9, 2.5, 0),
-      rear: new THREE.Vector3(-9.2, 2.1, 0),
-      roof: new THREE.Vector3(-4.9, 4.0, 0),
+      trailer: new THREE.Vector3(TRAILER_MID, 2.5, 0),
+      rear: new THREE.Vector3(TRAILER_REAR, 2.1, 0),
+      roof: new THREE.Vector3(TRAILER_MID, 4.0, 0),
       whole: bounds.getCenter(new THREE.Vector3()),
     },
     setPalette(next) {

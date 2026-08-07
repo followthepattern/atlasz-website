@@ -125,11 +125,12 @@ export default function SceneCanvas({ ambient = false, onLost }: SceneCanvasProp
       });
     };
 
-    // Roof anchor, projected each frame so the telemetry card can ride above
-    // the truck. Read from the asset's own anchors, not a fixed height, so it
-    // keeps tracking if the model is ever swapped.
+    // The vehicle's own centre, projected each frame so the readouts can flank
+    // it. Centre rather than roof: the readouts sit either side now, and
+    // anchoring off a point that is not the visual middle makes the two gaps
+    // unequal. Read from the asset's anchors so a swapped model still tracks.
     const roofLocal =
-      world.truckAnchors.roof?.clone() ?? new THREE.Vector3(-4.9, 4, 0);
+      world.truckAnchors.whole?.clone() ?? new THREE.Vector3(-6, 2, 0);
     const roofWorld = new THREE.Vector3();
     const projected = new THREE.Vector3();
 

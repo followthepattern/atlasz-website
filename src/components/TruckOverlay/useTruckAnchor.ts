@@ -9,9 +9,15 @@ import { useScrollStore } from "@/motion/ScrollProvider";
  */
 const AMBIENT_OPACITY = 0.92;
 
-/** Gap from the truck to the readout cluster, in px — enough to clear the cab. */
-const OFFSET_X = 250;
-/** Never let the cluster run off the right edge. */
+/* How far the readouts reach either side of the anchor: the gap that clears the
+   vehicle, plus the width of the readout itself. Equal on both sides, so the
+   composition stays symmetric about the truck. Used to clamp the anchor so
+   neither side runs off its edge. Keep in step with the offsets in index.tsx.
+
+   400 is measured, not guessed: seen square on at the hero framing the truck is
+   ~730px wide, so anything under ~370 clips its nose and tail. */
+const LEFT_REACH = 400 + 260;
+const RIGHT_REACH = 400 + 260;
 const EDGE_MARGIN = 24;
 
 /**
@@ -51,9 +57,6 @@ export function useTruckAnchor<T extends HTMLElement>() {
   const scroll = useScrollStore();
 
   useEffect(() => {
-    // Measured once. Reading layout inside the subscriber would force a reflow
-    // on every frame, which is the one thing this whole approach avoids.
-    let width = 0;
     let onScreen = false;
     let progress = scroll.get();
 
@@ -66,14 +69,16 @@ export function useTruckAnchor<T extends HTMLElement>() {
     const stopPosition = truckScreen.subscribe(({ x, y, visible }) => {
       const element = ref.current;
       if (!element) return;
-      if (!width) width = element.offsetWidth;
       onScreen = visible;
       applyOpacity();
 
-      // Offset clear of the cab, then clamped so the cluster cannot slide off
-      // the right edge when the camera carries the truck across the frame.
-      const limit = Math.max(EDGE_MARGIN, window.innerWidth - width - EDGE_MARGIN);
-      const tx = Math.min(Math.max(x + OFFSET_X, EDGE_MARGIN), limit);
+      // Clamped so neither side runs off its edge as the camera carries the
+      // truck across frame. Below the width both readouts need, the band is
+      // degenerate — centre it and let them sit symmetrically instead of
+      // snapping to whichever bound happens to win.
+      const min = LEFT_REACH + EDGE_MARGIN;
+      const max = window.innerWidth - RIGHT_REACH - EDGE_MARGIN;
+      const tx = max < min ? window.innerWidth / 2 : Math.min(Math.max(x, min), max);
 
       // translate3d keeps this on the compositor — repositioned every frame, it
       // must never trigger layout.
@@ -104,13 +109,10 @@ export function useTruckAnchor<T extends HTMLElement>() {
  * ambient instrumentation, not content, and must never compete with the copy
  * they pass over — where a section uses .glass, they end up blurred behind it,
  * which is exactly right.
+ *
+ * Gated at 2xl. A full-length semi seen square on takes most of the frame, and
+ * flanking it needs 1320px before margins — below that the readouts would have
+ * to sit on top of the vehicle, which is the one thing they must not do.
  */
 export const FLOATING_SHELL =
-  "pointer-events-none fixed left-0 top-0 z-[-5] hidden opacity-0 transition-opacity duration-300 lg:block";
-
-/**
- * The cluster sits to the right of the truck. The page's copy is left-aligned
- * inside a centred container, so keeping the readouts on the far side of the
- * vehicle is what stops them competing with it.
- */
-export const FLOATING_GROUP = "flex w-[300px] -translate-y-1/2 flex-col gap-5";
+  "pointer-events-none fixed left-0 top-0 z-[-5] hidden opacity-0 transition-opacity duration-300 2xl:block";

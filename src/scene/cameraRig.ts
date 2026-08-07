@@ -36,30 +36,36 @@ function smoothstep(t: number) {
  * and forth. Distance and height are free to vary — that is where the variety
  * in the shots comes from — but the bearing may only ever go one way.
  *
- *   0.00  +35°   0.24  +30°   0.48  +15°
- *   0.70  -12°   0.88  -33°   1.00  -48°
+ *   0.00 +102°   0.24  +31°   0.48  +15°
+ *   0.70  -13°   0.88  -35°   1.00  -50°
  *          ^ the single crossing lives between 0.48 and 0.70
  *
  * Bearings are measured from the truck's origin, so they account for each
  * framing's anchor: the hero hangs off `cab`, the rest off `trailer`.
  */
 function buildFramings(anchors: Record<string, THREE.Vector3>): Framing[] {
-  const cab = anchors.cab ?? new THREE.Vector3(1.3, 2.3, 0);
-  const trailer = anchors.trailer ?? new THREE.Vector3(-4.9, 2.5, 0);
+  const trailer = anchors.trailer ?? new THREE.Vector3(-7.4, 2.5, 0);
 
   const from = (base: THREE.Vector3, x: number, y: number, z: number) =>
     base.clone().add(new THREE.Vector3(x, y, z));
 
   return [
-    // Hero — low three-quarter ahead of the cab. The look target is centred on
-    // the vehicle and lifted above it, which holds the truck in the middle of
-    // frame and low, leaving the upper band to the headline. Only the look
-    // target moves; `offset` sets the bearing, so the single-crossing sweep is
-    // unaffected by this framing choice.
+    // Hero — near side-on, so the opening frame reads as a full profile with
+    // the livery square to camera. The look target is centred on the vehicle
+    // and lifted above it, holding the truck mid-frame and low, which leaves
+    // the upper band to the headline.
+    //
+    // A wider opening bearing only lengthens the first leg of the sweep; it
+    // still decreases from here, so the single-crossing invariant holds.
     {
       at: 0,
-      offset: from(cab, 16, 2.2, 12),
-      lookOffset: from(trailer, 3, 3.4, 0),
+      // Square to the flank: camera and look target share an x, so the view
+      // direction is perpendicular to the vehicle's length and it reads as a
+      // flat elevation rather than a three-quarter. The target is lifted above
+      // the truck, which drops it into the lower band and leaves the upper one
+      // to the headline.
+      offset: from(trailer, 1.7, 1.2, 31),
+      lookOffset: from(trailer, 1.7, 4.8, 0),
     },
     // From here down the page is dense with copy and cards, so every framing
     // stands well back. Close framings put the truck and the warehouse straight
