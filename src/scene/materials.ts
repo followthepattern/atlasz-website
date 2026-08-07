@@ -105,8 +105,10 @@ export function applyPalette(materials: THREE.Material[], palette: ScenePalette)
       line.opacity = palette.lineOpacity * 0.65;
     } else if (kind === "grid") {
       line.color.copy(palette.grid);
+      line.opacity = palette.gridOpacity;
     } else if (kind === "route") {
       line.color.copy(palette.lineDim);
+      line.opacity = palette.lineOpacity * 0.5;
     } else if (kind === "particle" && material instanceof THREE.PointsMaterial) {
       material.color.copy(palette.particle);
       material.opacity = palette.particleOpacity;

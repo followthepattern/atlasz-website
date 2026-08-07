@@ -1,18 +1,23 @@
 import * as THREE from "three";
 
-/* The site is dark-first but light mode is reachable via
-   localStorage['atlasz-theme'] (see index.html), so the scene carries a real
-   palette for each.
+/* The scene takes its colours from the site's own theme tokens — --canvas,
+   --fg and --muted, read off the document at runtime. Nothing here invents a
+   palette.
 
-   No additive blending and no emissive accents: the scene reads as a precise
-   technical drawing in both themes, not a hologram. */
+   Reading the live custom properties rather than copying their hex values means
+   the scene cannot drift from the design system: restyle the site in
+   globals.css and the 3D scene follows on the next theme read, including the
+   light/dark swap.
+
+   No additive blending and no emissive accents — solid panels and crisp
+   outlines in the site's own neutral greys. */
 export type ScenePalette = {
   line: THREE.Color;
   lineDim: THREE.Color;
   /** Lamps and trim. A material colour, not a light source. */
   accent: THREE.Color;
   fill: THREE.Color;
-  /** Windscreen and side windows — darker than the body in both themes. */
+  /** Windscreen and side windows — a touch lighter than the body panels. */
   glass: THREE.Color;
   grid: THREE.Color;
   particle: THREE.Color;
@@ -21,48 +26,45 @@ export type ScenePalette = {
   lineOpacity: number;
   glassOpacity: number;
   particleOpacity: number;
+  gridOpacity: number;
   fogDensity: number;
 };
 
-export const DARK_PALETTE: ScenePalette = {
-  line: new THREE.Color(0x9fb3c4),
-  lineDim: new THREE.Color(0x4a5d6e),
-  accent: new THREE.Color(0xc4d2dd),
-  // Slightly lighter than the page canvas (#18181b) so the body reads as a
-  // solid volume rather than a hole in the page.
-  fill: new THREE.Color(0x1c2530),
-  glass: new THREE.Color(0x2b3947),
-  grid: new THREE.Color(0x2b3644),
-  particle: new THREE.Color(0x62778a),
-  fog: new THREE.Color(0x18181b),
-  fillOpacity: 0.92,
-  lineOpacity: 0.85,
-  glassOpacity: 0.75,
-  particleOpacity: 0.4,
-  fogDensity: 0.015,
-};
+const VALID = /^(#|rgb)/;
 
-export const LIGHT_PALETTE: ScenePalette = {
-  line: new THREE.Color(0x2c3e4f),
-  lineDim: new THREE.Color(0x8ea2b2),
-  accent: new THREE.Color(0x5c6f7e),
-  fill: new THREE.Color(0xeef3f7),
-  glass: new THREE.Color(0xd2dee7),
-  grid: new THREE.Color(0xc2cfda),
-  particle: new THREE.Color(0x8698a7),
-  fog: new THREE.Color(0xffffff),
-  // On white there is no glow to carry the shape, so the drawing does the work.
-  fillOpacity: 0.95,
-  lineOpacity: 1,
-  glassOpacity: 0.85,
-  particleOpacity: 0.45,
-  fogDensity: 0.011,
-};
+function cssColor(name: string, fallback: string) {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return new THREE.Color(VALID.test(raw) ? raw : fallback);
+}
 
 export function paletteForDocument(): ScenePalette {
-  return document.documentElement.classList.contains("dark")
-    ? DARK_PALETTE
-    : LIGHT_PALETTE;
+  const dark = document.documentElement.classList.contains("dark");
+
+  const canvas = cssColor("--canvas", dark ? "#18181b" : "#ffffff");
+  const fg = cssColor("--fg", dark ? "#ffffff" : "#09090b");
+  const muted = cssColor("--muted", dark ? "#a1a1aa" : "#71717a");
+
+  // Panels are the page canvas lifted a little toward the foreground colour, so
+  // the bodywork reads as a solid volume instead of a hole in the page.
+  const fill = canvas.clone().lerp(fg, dark ? 0.07 : 0.05);
+  const glass = canvas.clone().lerp(fg, dark ? 0.15 : 0.11);
+
+  return {
+    line: fg.clone(),
+    lineDim: muted.clone(),
+    accent: fg.clone(),
+    fill,
+    glass,
+    grid: muted.clone(),
+    particle: muted.clone(),
+    fog: canvas.clone(),
+    fillOpacity: dark ? 0.92 : 0.95,
+    lineOpacity: dark ? 0.72 : 0.9,
+    glassOpacity: dark ? 0.8 : 0.9,
+    particleOpacity: 0.35,
+    gridOpacity: dark ? 0.16 : 0.28,
+    fogDensity: dark ? 0.015 : 0.011,
+  };
 }
 
 /** Calls back whenever the `.dark` class on <html> is added or removed. */

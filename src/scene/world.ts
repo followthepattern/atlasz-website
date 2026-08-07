@@ -97,12 +97,13 @@ export function createWorld(palette: ScenePalette, quality: QualitySettings): Wo
   const gridMaterial = edgeMaterial(palette, true);
   gridMaterial.userData.kind = "grid";
   gridMaterial.color.copy(palette.grid);
-  gridMaterial.opacity = 0.35;
+  gridMaterial.opacity = palette.gridOpacity;
   materials.push(gridMaterial);
   scene.add(buildGrid(gridMaterial));
 
   const routeMaterial = edgeMaterial(palette, true);
   routeMaterial.userData.kind = "route";
+  routeMaterial.opacity = palette.lineOpacity * 0.5;
   materials.push(routeMaterial);
   scene.add(buildRoute(routeMaterial));
 
@@ -151,7 +152,6 @@ export function createWorld(palette: ScenePalette, quality: QualitySettings): Wo
     anchors,
     setPalette(next) {
       applyPalette(materials, next);
-      gridMaterial.opacity = 0.35;
       for (const asset of assets) asset.setPalette(next);
       const fog = scene.fog as THREE.FogExp2;
       fog.color.copy(next.fog);

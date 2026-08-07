@@ -91,21 +91,24 @@ html.lenis body {
 
 /* The 3D scene's base layer. Always present — when WebGL is unavailable or the
    context is lost this is simply all there is, and nothing else changes. */
+/* Tinted from --fg, so it stays in the site's own neutral palette and follows
+   the theme without a second rule. */
 .scene-backdrop {
   position: fixed;
   inset: 0;
   z-index: -20;
   pointer-events: none;
   background:
-    radial-gradient(110% 70% at 72% 8%, rgba(56, 189, 248, 0.1), transparent 62%),
-    radial-gradient(90% 60% at 12% 88%, rgba(56, 189, 248, 0.06), transparent 58%),
-    var(--canvas);
-}
-
-:root:not(.dark) .scene-backdrop {
-  background:
-    radial-gradient(110% 70% at 72% 8%, rgba(2, 132, 199, 0.09), transparent 62%),
-    radial-gradient(90% 60% at 12% 88%, rgba(2, 132, 199, 0.05), transparent 58%),
+    radial-gradient(
+      110% 70% at 72% 8%,
+      color-mix(in oklab, var(--fg) 7%, transparent),
+      transparent 62%
+    ),
+    radial-gradient(
+      90% 60% at 12% 88%,
+      color-mix(in oklab, var(--fg) 4%, transparent),
+      transparent 58%
+    ),
     var(--canvas);
 }
 
