@@ -65,9 +65,17 @@ export function Hero({ onHome, onStart }: HeroProps) {
             />
           </h1>
 
-          <Text data-reveal className="max-w-xl text-base">
-            {t("hero.subtitle")}
-          </Text>
+          {/* The same local pool the floating chart uses. The headline is white
+              and heavy enough to carry itself on the broad hero fade alone; the
+              subtitle is muted body colour at body size, and the scene's grid
+              lines run straight through it. */}
+          <div data-reveal className="relative max-w-xl">
+            <div
+              className="ambient-scrim pointer-events-none absolute -inset-x-5 -inset-y-3"
+              aria-hidden="true"
+            />
+            <Text className="relative text-base">{t("hero.subtitle")}</Text>
+          </div>
 
           <div data-reveal>
             <Button variant="primary" onClick={onStart} className="mt-2">
