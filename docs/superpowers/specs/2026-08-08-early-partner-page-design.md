@@ -47,7 +47,7 @@ src/pages/
                            + Onboarding + Integrations + References + Footer
   SubscribePage.tsx        quiz → form → success; funnel state, validation,
                            subscribe(); header + LanguageSwitcher + Footer
-  PrivacyPage.tsx          Privacy + Footer
+  PrivacyPage.tsx          route binding for the self-contained Privacy
   EarlyPartnerPage.tsx     Part 2
 src/App.tsx                route switch + SceneBackdrop + useDocumentMeta
 ```
@@ -76,9 +76,10 @@ top, preserving today's `goHome` behaviour. Unknown hashes resolve to
   to the page.
 - `Hero`'s `onStart` becomes `navigate("subscribe")`; `onHome` becomes
   `navigate("landing")`.
-- Each page decides its own `Footer`. Landing, Subscribe and Privacy render one;
-  the Early Partner deck does not. This also fixes an existing inconsistency:
-  `Privacy` is currently the only route that should have a footer and lacks one.
+- Each page decides its own footer. Landing and Subscribe render the shared
+  `Footer`; `Privacy` keeps the reduced one it already carries — a legal page
+  should not carry the site nav that links back to itself — and the Early
+  Partner deck has none.
 - `App` keeps `useDocumentMeta()`, the route switch, `<SceneBackdrop>`, and
   `useScrollRefresh([route, i18n.language])`. The `stage` dependency is gone
   from the refresh — `SubscribePage` owns its own `useScrollRefresh([stage])`,
@@ -201,7 +202,7 @@ camera changes sides exactly once.
    camera sweep visually unchanged from before the refactor.
 3. `#subscribe` — quiz disabled, form validates, submit path reaches
    `subscribe()`; back button returns to the landing page.
-4. `#privacy` — renders, back link works, now has a footer.
+4. `#privacy` — renders, back link works, footer unchanged.
 5. `#early-partner` — all five sections, every deck string present, truck
    arrives at the bays by the last section, no `[cameraRig]` warning in the
    console.
