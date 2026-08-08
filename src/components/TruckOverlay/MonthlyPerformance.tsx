@@ -108,7 +108,10 @@ export function MonthlyPerformance() {
 
         <svg
           viewBox={`0 -6 ${W} ${H + 12}`}
-          className="mt-3 w-full overflow-visible"
+          // Pulled up against the headline. The plot is 118px tall, so this
+          // closes the gap by roughly a fifth of the chart's height and sits
+          // the figure with the data rather than floating above it.
+          className="-mt-2 w-full overflow-visible"
           style={{ height: H }}
         >
           <path d={costArea} fill="var(--fg)" fillOpacity="0.09" />

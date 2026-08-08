@@ -52,7 +52,7 @@ export default function SceneCanvas({ ambient = false, onLost }: SceneCanvasProp
     renderer.setSize(window.innerWidth, window.innerHeight, false);
 
     const camera = new THREE.PerspectiveCamera(
-      30,
+      28,
       window.innerWidth / window.innerHeight,
       0.5,
       600,
