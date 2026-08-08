@@ -25,14 +25,16 @@ const ROUTE = new THREE.CatmullRomCurve3([
 const TRUCK_FROM = 0.3;
 const TRUCK_TO = 0.612;
 
-const WAREHOUSE_AT = 0.62;
-const WAREHOUSE_OFFSET = 24; // metres from the carriageway centreline
-const WAREHOUSE_WIDTH = 30; // must match proceduralWarehouse
+/* Two identical units already standing at the facility, parked side by side
+   with a bay left empty between them for the one that arrives. They belong to
+   the arrival, not the opening: the hero is one vehicle on an open road, and
+   the end of the page is it pulling into its own fleet's yard. */
+const PARKING_BAY = 5.4; // metres between bay centres, across the apron
 
-/** How far off the carriageway the truck pulls in toward the dock face. */
-const DOCK_PULL = WAREHOUSE_OFFSET - WAREHOUSE_WIDTH / 2 - 5;
-/** Fraction of the scroll over which that turn-in happens, at the very end. */
-const PULL_IN_FROM = 0.78;
+const WAREHOUSE_AT = 0.62;
+/* Beside the bays rather than across a wide apron, now that the truck holds a
+   straight line instead of crossing the yard to reach it. */
+const WAREHOUSE_OFFSET = 26; // metres from the route centreline
 
 const GRID_SIZE = 460;
 const GRID_STEP = 8;
@@ -50,11 +52,6 @@ const TREE_SPACING = 17; // metres of arc between rows
  */
 const TREE_VERGE = 18;
 const TREE_SPREAD = 16; // extra metres of scatter beyond the verge
-
-function smoothstep(t: number) {
-  const c = Math.min(1, Math.max(0, t));
-  return c * c * (3 - 2 * c);
-}
 
 /** Heading that points an asset's local +X along the route at `t`. */
 function headingAt(t: number) {
@@ -166,6 +163,15 @@ export function createWorld(palette: ScenePalette, quality: QualitySettings): Wo
   const truck = proceduralTruck(palette);
   scene.add(truck.object3D);
 
+  // Flanking bays on the apron. Same road position as the arriving truck,
+  // offset across it, so the empty middle bay is the one it pulls into.
+  const parked = [-PARKING_BAY, PARKING_BAY].map((side) => {
+    const unit = proceduralTruck(palette);
+    placeOnRoute(unit.object3D, TRUCK_TO, side);
+    scene.add(unit.object3D);
+    return unit;
+  });
+
   const trees = proceduralTrees(palette, treePlacements());
   scene.add(trees.object3D);
 
@@ -180,16 +186,19 @@ export function createWorld(palette: ScenePalette, quality: QualitySettings): Wo
   function driveTo(progress: number) {
     const p = Math.min(1, Math.max(0, progress));
     const t = TRUCK_FROM + (TRUCK_TO - TRUCK_FROM) * p;
-    // Turn in toward the dock over the last stretch of the scroll.
-    const side = smoothstep((p - PULL_IN_FROM) / (1 - PULL_IN_FROM)) * DOCK_PULL;
-    placeOnRoute(truck.object3D, t, side);
+    // Straight down its own line, never across it. An earlier version ramped a
+    // lateral offset in over the last stretch to reach the dock, which slid the
+    // truck sideways while it stayed pointed along the road — a crab-walk, not
+    // a drive. The bays are on this line instead, so arriving is pure forward
+    // motion and the truck is already square with the pair it parks between.
+    placeOnRoute(truck.object3D, t, 0);
     follow.position.copy(truck.object3D.position);
     follow.heading = truck.object3D.rotation.y;
   }
 
   driveTo(0);
 
-  const assets: SceneAsset[] = [truck, warehouse, trees];
+  const assets: SceneAsset[] = [truck, ...parked, warehouse, trees];
 
   return {
     scene,
@@ -204,7 +213,9 @@ export function createWorld(palette: ScenePalette, quality: QualitySettings): Wo
     },
     update(elapsed, delta, progress) {
       driveTo(progress);
-      for (const asset of assets) asset.update?.(elapsed, delta, progress);
+      // Only the moving unit is animated. The parked pair keep their wheels
+      // still, which is what tells them apart from the one under way.
+      truck.update?.(elapsed, delta, progress);
     },
     dispose() {
       for (const asset of assets) asset.dispose();

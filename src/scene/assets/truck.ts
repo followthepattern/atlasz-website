@@ -47,13 +47,19 @@ const WHEEL_RADIUS = 0.56;
 const TRACK = 1.05;
 const FRONT_AXLE = 1.8;
 
-/* A full-length European semi-trailer — 13.6 m is the standard box. Derived
-   rather than written out at each call site: the rear doors, underrun bar,
-   mudflaps, ribbing and rear bogie all key off these. */
+/* The semi-trailer. Derived rather than written out at each call site: the rear
+   doors, underrun bar, mudflaps, ribbing, rear bogie and chassis all key off
+   these, so the length is one number.
+
+   The box runs the full length of the underframe. Previously the chassis rail
+   carried on past the container and the trailer read as a skeleton with a short
+   box bolted to the front of it. */
 const TRAILER_FRONT = -0.6;
-const TRAILER_LENGTH = 13.6;
+const TRAILER_LENGTH = 16.5;
 const TRAILER_REAR = TRAILER_FRONT - TRAILER_LENGTH;
 const TRAILER_MID = (TRAILER_FRONT + TRAILER_REAR) / 2;
+/** Chassis runs from under the cab to the back of the box, and stops there. */
+const CHASSIS_FRONT = 0.9;
 
 const AXLES = [FRONT_AXLE, TRAILER_REAR + 3.2, TRAILER_REAR + 1.9];
 
@@ -149,7 +155,12 @@ export function proceduralTruck(palette: ScenePalette): SceneAsset {
 
   // --- Chassis -----------------------------------------------------------
   for (const z of [0.82, -0.82]) {
-    addBox([TRAILER_LENGTH + 3.6, 0.16, 0.14], [TRAILER_MID - 1.1, 0.86, z], fill, edgeDim);
+    addBox(
+      [CHASSIS_FRONT - TRAILER_REAR, 0.16, 0.14],
+      [(CHASSIS_FRONT + TRAILER_REAR) / 2, 0.86, z],
+      fill,
+      edgeDim,
+    );
   }
   addBox([0.5, 0.34, 1.5], [-0.35, 1.05, 0], fill, edgeDim); // fifth wheel
 

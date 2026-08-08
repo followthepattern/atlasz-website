@@ -99,10 +99,10 @@ function buildFramings(anchors: Record<string, THREE.Vector3>): Framing[] {
       offset: from(trailer, 41.5, 17, -23.5), // -33°
       lookOffset: from(trailer, 6, 0, 6),
     },
-    // Arrived: camera opposite the facility, truck between it and the dock.
+    // Arrived: camera opposite the yard, the truck between it and the bays.
     {
       at: 1,
-      offset: from(trailer, 35.5, 19, -34), // -48°
+      offset: from(trailer, 35.5, 19, -34), // -50°
       lookOffset: from(trailer, 4, 0, 10),
     },
   ];
