@@ -159,6 +159,27 @@ html.lenis body {
   filter: blur(16px);
 }
 
+/* Both washes above are sized to the content they sit behind, not to the
+   viewport, and on a narrow screen that content is far taller: the hero
+   headline wraps to three lines and the subtitle to three more. The hero
+   gradient reaches transparent at 68% of its section, so once the section is
+   taller than the screen that fade-out lands below the fold and the whole
+   visible area is under it. The copy pool grows the same way, straight down
+   into the band the truck occupies.
+
+   A dark wireframe under 74% of the page colour is indistinguishable from
+   empty background — which is why the vehicle went missing on a phone rather
+   than merely looking dim. At these widths the copy stacks above the truck
+   against plain canvas and holds its contrast unaided, so the washes are not
+   earning their keep. */
+@media (max-width: 1023px) {
+  .hero-scrim,
+  .ambient-scrim {
+    background: none;
+    filter: none;
+  }
+}
+
 /* Ambient instrumentation that drifts behind the page content. Deliberately
    weaker than .glass: these panels sit under the copy, and at full strength a
    muted heading passing over one loses its contrast even though the stacking
