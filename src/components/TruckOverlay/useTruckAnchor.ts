@@ -9,16 +9,15 @@ import { useScrollStore } from "@/motion/ScrollProvider";
  */
 const AMBIENT_OPACITY = 0.92;
 
-/* How far the readouts reach either side of the anchor: the gap that clears the
-   vehicle, plus the width of the readout itself. Equal on both sides, so the
-   composition stays symmetric about the truck. Used to clamp the anchor so
-   neither side runs off its edge. Keep in step with the offsets in index.tsx.
+/* How far the readouts reach either side of the anchor: their offset from the
+   centre plus their own width. Equal on both sides, so the pair stays symmetric
+   about the truck. Used to clamp the anchor so neither runs off its edge. Keep
+   in step with the offsets in index.tsx.
 
-   The gap is measured, not guessed: seen square on at the hero framing the
-   truck is ~730px wide, so anything under ~370 clips its nose and tail. It sits
-   well beyond that, pushed out to the margins for a wider composition. */
-const LEFT_REACH = 520 + 250;
-const RIGHT_REACH = 520 + 250;
+   They sit above the vehicle rather than flanking it, so these no longer have
+   to clear the truck's on-screen width — only each other. */
+const LEFT_REACH = 40 + 260;
+const RIGHT_REACH = 40 + 260;
 const EDGE_MARGIN = 24;
 
 /**
@@ -112,9 +111,9 @@ export function useTruckAnchor<T extends HTMLElement>() {
  * which is exactly right.
  *
  * The breakpoint is the arithmetic, not a guess: two reaches plus both margins
- * is 2 x 770 + 48 = 1588px. Below that the readouts would have to sit on the
- * vehicle or run off the edge, so they are hidden instead. 2xl at 1536 would
- * have clipped them by a few pixels.
+ * is 2 x 300 + 48 = 648px. Stacked above the truck the pair is far narrower
+ * than it was flanking it, so xl is room enough — below that they would be
+ * sitting squarely behind the hero copy.
  */
 export const FLOATING_SHELL =
-  "pointer-events-none fixed left-0 top-0 z-[-5] hidden opacity-0 transition-opacity duration-300 min-[1600px]:block";
+  "pointer-events-none fixed left-0 top-0 z-[-5] hidden opacity-0 transition-opacity duration-300 xl:block";

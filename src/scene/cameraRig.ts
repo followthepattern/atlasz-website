@@ -126,8 +126,8 @@ function assertSingleCrossing(framings: Framing[]) {
     if (bearings[i] > bearings[i - 1] + 0.5) {
       console.warn(
         "[cameraRig] camera bearing must decrease monotonically so the view " +
-          `flips sides only once; framing ${i} (${bearings[i].toFixed(1)}°) ` +
-          `swings back past framing ${i - 1} (${bearings[i - 1].toFixed(1)}°).`,
+        `flips sides only once; framing ${i} (${bearings[i].toFixed(1)}°) ` +
+        `swings back past framing ${i - 1} (${bearings[i - 1].toFixed(1)}°).`,
       );
     }
   }

@@ -45,13 +45,15 @@ export function TruckOverlay() {
       <div className="relative h-0 w-0">
         {split ? (
           <>
-            {/* Equal gaps either side of the vehicle's centre. They must clear
-                a full-length semi seen square on, and stay in step with
-                LEFT_REACH / RIGHT_REACH, which clamp the anchor. */}
-            <div className="absolute right-[520px] top-0 w-[250px] -translate-y-1/2">
+            {/* Both above the vehicle, straddling its centre with a gap between
+                them. `bottom` lifts them clear of the roof; the matching edge
+                means they align along the bottom despite differing heights.
+                The horizontal offsets stay in step with LEFT_REACH /
+                RIGHT_REACH, which clamp the anchor. */}
+            <div className="absolute bottom-[170px] right-[40px] w-[260px]">
               <RouteTelemetry />
             </div>
-            <div className="absolute left-[520px] top-0 w-[250px] -translate-y-1/2">
+            <div className="absolute bottom-[170px] left-[40px] w-[260px]">
               <MonthlyPerformance />
             </div>
           </>
