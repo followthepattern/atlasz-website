@@ -22,6 +22,15 @@ function smoothstep(t: number) {
 }
 
 /**
+ * Aspect at or above which the framings are used exactly as authored.
+ *
+ * Portrait only. Every landscape window — laptop, desktop, tablet held sideways
+ * — must come out bit-for-bit identical to the framings written below, so the
+ * narrow-frame handling can never drift the view anyone has already signed off.
+ */
+const NARROW_BELOW = 1;
+
+/**
  * Framings are built from the truck's own anchor points, never from bare
  * coordinates, so replacing the procedural model with a GLTF of different
  * proportions moves the camera with it.
@@ -43,11 +52,41 @@ function smoothstep(t: number) {
  * Bearings are measured from the truck's origin, so they account for each
  * framing's anchor: the hero hangs off `cab`, the rest off `trailer`.
  */
-function buildFramings(anchors: Record<string, THREE.Vector3>): Framing[] {
+function buildFramings(
+  anchors: Record<string, THREE.Vector3>,
+  aspect: number,
+): Framing[] {
   const trailer = anchors.trailer ?? new THREE.Vector3(-7.4, 2.5, 0);
+  const cab = anchors.cab ?? new THREE.Vector3(1.3, 2.3, 0);
 
+  /* A vertical field of view means the width a framing gets is the aspect
+     ratio's to give. These are authored against a wide desktop window; a
+     portrait phone sees roughly a quarter of that width at the same distance,
+     which crops the rig to whatever the look target happens to sit on — the
+     middle of the trailer.
+
+     `pull` backs the camera off in proportion, but only part of the way:
+     fitting all 17 m of a full-length rig into a portrait frame makes it a toy.
+     `cabBias` slides the aim forward onto the tractor unit instead, so what a
+     narrow frame is filled with is the cab rather than a length of box.
+
+     Both are 1 and 0 on a wide window, so desktop framing is untouched. */
+  const narrow =
+    aspect >= NARROW_BELOW ? 1 : Math.min(3, NARROW_BELOW / Math.max(aspect, 0.35));
+  const pull = 1 + (narrow - 1) * 0.5;
+
+  // Scaling the whole offset keeps each framing's bearing, so the
+  // single-crossing sweep survives the adjustment. At narrow = 1 this is a
+  // multiply by one — the framings come through untouched.
   const from = (base: THREE.Vector3, x: number, y: number, z: number) =>
-    base.clone().add(new THREE.Vector3(x, y, z));
+    base.clone().add(new THREE.Vector3(x * pull, y * pull, z * pull));
+
+  /* Where the hero aims along the vehicle: its authored point on a landscape
+     window, sliding to the cab as the frame turns portrait. Interpolating to
+     the cab anchor rather than adding a bias keeps it bounded — an additive
+     bias overshoots past the nose onto empty road at the narrowest clamp. */
+  const towardCab = Math.min(1, (narrow - 1) / 1.2);
+  const heroAimX = 1.7 * pull + (cab.x - trailer.x - 1.7 * pull) * towardCab;
 
   return [
     // Hero — near side-on, so the opening frame reads as a full profile with
@@ -64,8 +103,10 @@ function buildFramings(anchors: Record<string, THREE.Vector3>): Framing[] {
       // flat elevation rather than a three-quarter. The target is lifted above
       // the truck, which drops it into the lower band and leaves the upper one
       // to the headline.
-      offset: from(trailer, 1.7, 1.2, 31),
-      lookOffset: from(trailer, 1.7, 4.8, 0),
+      // Camera and look share an x — including the aim bias — so the view
+      // direction stays perpendicular to the vehicle however narrow the frame.
+      offset: trailer.clone().add(new THREE.Vector3(heroAimX, 1.2 * pull, 31 * pull)),
+      lookOffset: trailer.clone().add(new THREE.Vector3(heroAimX, 4.8 * pull, 0)),
     },
     // From here down the page is dense with copy and cards, so every framing
     // stands well back. Close framings put the truck and the warehouse straight
@@ -139,9 +180,11 @@ export function createCameraRig(
   anchors: Record<string, THREE.Vector3>,
   options: { reduced?: boolean } = {},
 ): CameraRig {
-  const framings = buildFramings(anchors);
+  let builtAspect = camera.aspect;
+  let framings = buildFramings(anchors, builtAspect);
   if (import.meta.env.DEV) assertSingleCrossing(framings);
 
+  let lastProgress = 0;
   const localOffset = framings[0].offset.clone();
   const localLook = framings[0].lookOffset.clone();
   const desiredPosition = new THREE.Vector3();
@@ -163,6 +206,7 @@ export function createCameraRig(
 
   function setProgress(progress: number) {
     const p = Math.min(1, Math.max(0, progress));
+    lastProgress = p;
     const first = framings[0];
     const last = framings[framings.length - 1];
 
@@ -201,6 +245,14 @@ export function createCameraRig(
   snap();
 
   function update(elapsed: number, delta: number) {
+    // Re-author the framings when the window changes shape — a rotated phone
+    // needs a different pull-back, and the rig is the only thing that knows it.
+    if (Math.abs(camera.aspect - builtAspect) > 0.01) {
+      builtAspect = camera.aspect;
+      framings = buildFramings(anchors, builtAspect);
+      setProgress(lastProgress);
+    }
+
     // The truck has moved since setProgress ran, so resolve the framing against
     // its current pose every frame rather than only on scroll.
     toWorld(localOffset, desiredPosition);
