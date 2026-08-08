@@ -85,7 +85,13 @@ function buildFramings(
      window, sliding to the cab as the frame turns portrait. Interpolating to
      the cab anchor rather than adding a bias keeps it bounded — an additive
      bias overshoots past the nose onto empty road at the narrowest clamp. */
-  const towardCab = Math.min(1, (narrow - 1) / 1.2);
+  /* Sliding the aim onto the tractor is a phone measure, not a portrait one.
+     A tablet held upright is around 0.70 and still has the width to hold most
+     of the rig, so biasing it forward there just pushes the vehicle up the
+     frame and crops its tail for nothing. Phones at full height sit near 0.46
+     and genuinely need it. The ramp spans between the two: nothing until a
+     window is meaningfully narrower than a tablet, full bias by phone. */
+  const towardCab = Math.min(1, Math.max(0, (narrow - 1.6) / 0.4));
   const heroAimX = 1.7 * pull + (cab.x - trailer.x - 1.7 * pull) * towardCab;
 
   /* How far above the vehicle the hero aims, which is what drops it into the
