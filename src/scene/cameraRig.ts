@@ -88,6 +88,13 @@ function buildFramings(
   const towardCab = Math.min(1, (narrow - 1) / 1.2);
   const heroAimX = 1.7 * pull + (cab.x - trailer.x - 1.7 * pull) * towardCab;
 
+  /* How far above the vehicle the hero aims, which is what drops it into the
+     lower band and leaves the upper one to the headline. The push is angular,
+     so it costs the same share of frame at any distance — and on a phone that
+     share put the truck between 72% and 90% down the screen, which on iOS
+     Safari is mostly behind the bottom address bar. Portrait aims flatter. */
+  const heroLift = 4.8 - 2.2 * towardCab;
+
   return [
     // Hero — near side-on, so the opening frame reads as a full profile with
     // the livery square to camera. The look target is centred on the vehicle
@@ -106,7 +113,7 @@ function buildFramings(
       // Camera and look share an x — including the aim bias — so the view
       // direction stays perpendicular to the vehicle however narrow the frame.
       offset: trailer.clone().add(new THREE.Vector3(heroAimX, 1.2 * pull, 31 * pull)),
-      lookOffset: trailer.clone().add(new THREE.Vector3(heroAimX, 4.8 * pull, 0)),
+      lookOffset: trailer.clone().add(new THREE.Vector3(heroAimX, heroLift * pull, 0)),
     },
     // From here down the page is dense with copy and cards, so every framing
     // stands well back. Close framings put the truck and the warehouse straight
