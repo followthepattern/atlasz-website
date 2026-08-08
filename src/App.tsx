@@ -5,6 +5,8 @@ import { useScrollRefresh } from "@/motion/ScrollProvider";
 import { LandingPage } from "@/pages/LandingPage";
 import { SubscribePage } from "@/pages/SubscribePage";
 import { PrivacyPage } from "@/pages/PrivacyPage";
+import { EarlyPartnerPage } from "@/pages/EarlyPartnerPage";
+import { deckJourney, landingJourney } from "@/scene/journeys";
 import { useDocumentMeta } from "./i18n/useDocumentMeta";
 import { useRoute } from "./router";
 
@@ -30,13 +32,18 @@ export default function App() {
 
   return (
     <>
-      {/* Outside the marketing scroll the page is a form or a legal document;
-          the scene settles into a quiet framing instead of following a
-          progress it no longer maps to. */}
-      <SceneBackdrop ambient={route !== "landing"} />
+      {/* Two pages drive the scene by scrolling — the marketing page and the
+          deck, each with its own journey. On the rest the page is a form or a
+          legal document, so the scene settles into a quiet framing rather than
+          following a progress it no longer maps to. */}
+      <SceneBackdrop
+        ambient={route !== "landing" && route !== "early-partner"}
+        journey={route === "early-partner" ? deckJourney : landingJourney}
+      />
       {route === "landing" && <LandingPage />}
       {route === "subscribe" && <SubscribePage />}
       {route === "privacy" && <PrivacyPage />}
+      {route === "early-partner" && <EarlyPartnerPage />}
     </>
   );
 }

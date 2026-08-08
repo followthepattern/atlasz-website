@@ -9,10 +9,13 @@ import { createCameraRig } from "./cameraRig";
 import { truckScreen } from "./truckScreen";
 import { detectQuality } from "./quality";
 import { observeTheme, paletteForDocument } from "./palette";
+import type { Journey } from "./journeys";
 
 type SceneCanvasProps = {
   /** Quiet framing for the funnel and #privacy, where the page is a form. */
   ambient?: boolean;
+  /** Which page's choreography to drive. */
+  journey: Journey;
   /** Called if the GPU drops the context — the parent swaps in the gradient. */
   onLost?: () => void;
 };
@@ -20,7 +23,11 @@ type SceneCanvasProps = {
 /** Scroll progress the camera parks at when the page is not the marketing scroll. */
 const AMBIENT_PROGRESS = 0.14;
 
-export default function SceneCanvas({ ambient = false, onLost }: SceneCanvasProps) {
+export default function SceneCanvas({
+  ambient = false,
+  journey,
+  onLost,
+}: SceneCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ambientRef = useRef(ambient);
   ambientRef.current = ambient;
@@ -58,8 +65,10 @@ export default function SceneCanvas({ ambient = false, onLost }: SceneCanvasProp
       600,
     );
 
-    const world = createWorld(palette, quality);
-    const rig = createCameraRig(camera, world.follow, world.truckAnchors, { reduced });
+    const world = createWorld(palette, quality, journey);
+    const rig = createCameraRig(camera, world.follow, world.truckAnchors, journey, {
+      reduced,
+    });
     rig.setProgress(0);
     rig.snap();
 
@@ -184,7 +193,10 @@ export default function SceneCanvas({ ambient = false, onLost }: SceneCanvasProp
       world.dispose();
       renderer.dispose();
     };
-  }, [store, onLost]);
+    // A journey change rebuilds the whole world, which is what navigating
+    // between the marketing scroll and the deck should do — they are different
+    // roads, not the same one framed differently.
+  }, [store, journey, onLost]);
 
   return (
     <canvas

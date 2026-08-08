@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
    for — and this is the mechanism #privacy already used before there was a
    router at all. */
 
-export type Route = "landing" | "subscribe" | "privacy";
+export type Route = "landing" | "subscribe" | "privacy" | "early-partner";
 
 /* The landing page is the bare URL, deliberately. It has been shareable without
    a fragment since before there was a router, and giving it one now would
@@ -14,6 +14,8 @@ const HASH: Record<Route, string> = {
   landing: "",
   subscribe: "#subscribe",
   privacy: "#privacy",
+  // Unlisted. Nothing links here; it is opened directly, to present from.
+  "early-partner": "#early-partner",
 };
 
 const BY_HASH = new Map<string, Route>(

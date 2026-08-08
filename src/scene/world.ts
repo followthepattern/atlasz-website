@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import type { ScenePalette } from "./palette";
 import type { QualitySettings } from "./quality";
+import type { Journey } from "./journeys";
 import { applyPalette, disposeObject, edgeMaterial } from "./materials";
 import { proceduralTruck } from "./assets/truck";
 import { proceduralWarehouse } from "./assets/warehouse";
@@ -21,9 +22,10 @@ const ROUTE = new THREE.CatmullRomCurve3([
   new THREE.Vector3(230, 0.05, 20),
 ]);
 
-/** Where the truck sits on the route at scroll 0 and scroll 1. */
-const TRUCK_FROM = 0.3;
-const TRUCK_TO = 0.612;
+/* Where the truck starts and stops along the route is the journey's to say — a
+   short page covers less road than a long one — so nothing here fixes either
+   end. The parked pair are placed at whatever the journey's arrival point is,
+   which is what keeps them straddling it however far the truck has driven. */
 
 /* Two identical units already standing at the facility, parked side by side
    with a bay left empty between them for the one that arrives. They belong to
@@ -147,7 +149,11 @@ export type World = {
   dispose(): void;
 };
 
-export function createWorld(palette: ScenePalette, quality: QualitySettings): World {
+export function createWorld(
+  palette: ScenePalette,
+  quality: QualitySettings,
+  journey: Journey,
+): World {
   const scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(palette.fog.getHex(), palette.fogDensity);
 
@@ -167,7 +173,7 @@ export function createWorld(palette: ScenePalette, quality: QualitySettings): Wo
   // offset across it, so the empty middle bay is the one it pulls into.
   const parked = [-PARKING_BAY, PARKING_BAY].map((side) => {
     const unit = proceduralTruck(palette);
-    placeOnRoute(unit.object3D, TRUCK_TO, side);
+    placeOnRoute(unit.object3D, journey.truckTo, side);
     scene.add(unit.object3D);
     return unit;
   });
@@ -185,7 +191,7 @@ export function createWorld(palette: ScenePalette, quality: QualitySettings): Wo
 
   function driveTo(progress: number) {
     const p = Math.min(1, Math.max(0, progress));
-    const t = TRUCK_FROM + (TRUCK_TO - TRUCK_FROM) * p;
+    const t = journey.truckFrom + (journey.truckTo - journey.truckFrom) * p;
     // Straight down its own line, never across it. An earlier version ramped a
     // lateral offset in over the last stretch to reach the dock, which slid the
     // truck sideways while it stayed pointed along the road — a crab-walk, not
