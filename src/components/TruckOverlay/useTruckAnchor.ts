@@ -14,10 +14,11 @@ const AMBIENT_OPACITY = 0.92;
    composition stays symmetric about the truck. Used to clamp the anchor so
    neither side runs off its edge. Keep in step with the offsets in index.tsx.
 
-   400 is measured, not guessed: seen square on at the hero framing the truck is
-   ~730px wide, so anything under ~370 clips its nose and tail. */
-const LEFT_REACH = 400 + 260;
-const RIGHT_REACH = 400 + 260;
+   The gap is measured, not guessed: seen square on at the hero framing the
+   truck is ~730px wide, so anything under ~370 clips its nose and tail. It sits
+   well beyond that, pushed out to the margins for a wider composition. */
+const LEFT_REACH = 520 + 250;
+const RIGHT_REACH = 520 + 250;
 const EDGE_MARGIN = 24;
 
 /**
@@ -110,9 +111,10 @@ export function useTruckAnchor<T extends HTMLElement>() {
  * they pass over — where a section uses .glass, they end up blurred behind it,
  * which is exactly right.
  *
- * Gated at 2xl. A full-length semi seen square on takes most of the frame, and
- * flanking it needs 1320px before margins — below that the readouts would have
- * to sit on top of the vehicle, which is the one thing they must not do.
+ * The breakpoint is the arithmetic, not a guess: two reaches plus both margins
+ * is 2 x 770 + 48 = 1588px. Below that the readouts would have to sit on the
+ * vehicle or run off the edge, so they are hidden instead. 2xl at 1536 would
+ * have clipped them by a few pixels.
  */
 export const FLOATING_SHELL =
-  "pointer-events-none fixed left-0 top-0 z-[-5] hidden opacity-0 transition-opacity duration-300 2xl:block";
+  "pointer-events-none fixed left-0 top-0 z-[-5] hidden opacity-0 transition-opacity duration-300 min-[1600px]:block";

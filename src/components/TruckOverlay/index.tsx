@@ -48,10 +48,10 @@ export function TruckOverlay() {
             {/* Equal gaps either side of the vehicle's centre. They must clear
                 a full-length semi seen square on, and stay in step with
                 LEFT_REACH / RIGHT_REACH, which clamp the anchor. */}
-            <div className="absolute right-[400px] top-0 w-[260px] -translate-y-1/2">
+            <div className="absolute right-[520px] top-0 w-[250px] -translate-y-1/2">
               <RouteTelemetry />
             </div>
-            <div className="absolute left-[400px] top-0 w-[260px] -translate-y-1/2">
+            <div className="absolute left-[520px] top-0 w-[250px] -translate-y-1/2">
               <MonthlyPerformance />
             </div>
           </>
