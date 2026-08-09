@@ -1,7 +1,21 @@
 import * as THREE from "three";
 import { CAMERA_DAMPING } from "@/motion/tokens";
-import type { Follow } from "./world";
-import type { Framing, Journey } from "./journeys";
+import type { Follow } from "./road";
+
+/**
+ * A framing, expressed relative to the moving vehicle rather than to the world.
+ *
+ * Offsets are in the truck's own frame: +x is ahead of it, +y up, +z out to one
+ * side. Because the truck drives along the route as the page scrolls, a
+ * world-space keyframe would be pointed at empty tarmac within a second — every
+ * framing has to travel with the vehicle.
+ */
+export type Framing = {
+  /** Scroll progress in [0, 1] at which this framing is fully reached. */
+  at: number;
+  offset: THREE.Vector3;
+  lookOffset: THREE.Vector3;
+};
 
 function smoothstep(t: number) {
   return t * t * (3 - 2 * t);
@@ -15,32 +29,43 @@ export type CameraRig = {
 };
 
 /**
- * Enforces the single-crossing invariant in development. Bearings drifting out
- * of order is invisible in a still and only shows up as the viewpoint jumping
- * sides mid-scroll, which is exactly the kind of thing that survives a review.
+ * Enforces the single-crossing invariant in development.
+ *
+ * A camera that changes sides more than once appears to jump back and forth,
+ * which is invisible in a still and only shows up mid-scroll — exactly the kind
+ * of thing that survives a review. Read each offset as a bearing around the
+ * vehicle, angle = atan2(z, x): those bearings must decrease monotonically, so
+ * the camera makes one continuous sweep. Distance and height are free to vary —
+ * that is where the variety in the shots comes from — but the bearing may only
+ * ever go one way.
  */
-function assertSingleCrossing(framings: Framing[]) {
+function assertSingleCrossing(framings: Framing[], label: string) {
   const bearings = framings.map((f) => (Math.atan2(f.offset.z, f.offset.x) * 180) / Math.PI);
   for (let i = 1; i < bearings.length; i += 1) {
     if (bearings[i] > bearings[i - 1] + 0.5) {
       console.warn(
-        "[cameraRig] camera bearing must decrease monotonically so the view " +
-        `flips sides only once; framing ${i} (${bearings[i].toFixed(1)}°) ` +
+        `[cameraRig:${label}] camera bearing must decrease monotonically so the ` +
+        `view flips sides only once; framing ${i} (${bearings[i].toFixed(1)}°) ` +
         `swings back past framing ${i - 1} (${bearings[i - 1].toFixed(1)}°).`,
       );
     }
   }
 }
 
+/**
+ * Interpolates a camera between framings and damps it toward the result.
+ *
+ * The mechanism only. Which framings, and how many, is the scene's to say —
+ * this is what lets a five-viewport marketing scroll and a five-section deck
+ * share their camera behaviour without sharing their choreography.
+ */
 export function createCameraRig(
   camera: THREE.PerspectiveCamera,
   follow: Follow,
-  anchors: Record<string, THREE.Vector3>,
-  journey: Journey,
-  options: { reduced?: boolean } = {},
+  framings: Framing[],
+  options: { reduced?: boolean; label?: string } = {},
 ): CameraRig {
-  const framings = journey.buildFramings(anchors);
-  if (import.meta.env.DEV) assertSingleCrossing(framings);
+  if (import.meta.env.DEV) assertSingleCrossing(framings, options.label ?? "scene");
 
   const localOffset = framings[0].offset.clone();
   const localLook = framings[0].lookOffset.clone();

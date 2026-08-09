@@ -1,6 +1,5 @@
 import { Outlet, useMatches } from "react-router-dom";
 import { SceneBackdrop } from "@/scene/SceneBackdrop";
-import { landingJourney } from "@/scene/journeys";
 import { useDocumentMeta } from "@/i18n/useDocumentMeta";
 
 /**
@@ -32,7 +31,7 @@ export function SiteLayout() {
       {/* Off the marketing scroll the page is a form or a legal document, so
           the scene settles into a quiet framing instead of following a
           progress it no longer maps to. */}
-      <SceneBackdrop journey={landingJourney} ambient={ambient} />
+      <SceneBackdrop scene="landing" ambient={ambient} />
       <Outlet />
     </>
   );

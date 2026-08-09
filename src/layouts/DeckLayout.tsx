@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { SceneBackdrop } from "@/scene/SceneBackdrop";
-import { deckJourney } from "@/scene/journeys";
 import { useScrollStore } from "@/motion/ScrollProvider";
 
 /* How many frames the rail counts. The deck's own, not the router's — the rail
@@ -63,7 +62,7 @@ export function DeckLayout() {
 
   return (
     <div className="flex min-h-full flex-col">
-      <SceneBackdrop journey={deckJourney} />
+      <SceneBackdrop scene="deck" />
       <Outlet />
       <ProgressRail />
     </div>

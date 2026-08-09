@@ -4,28 +4,34 @@ import gsap from "gsap";
 import { DURATION, EASE } from "@/motion/tokens";
 import { useScrollStore } from "@/motion/ScrollProvider";
 import { prefersReducedMotion } from "@/motion/usePrefersReducedMotion";
-import { createWorld } from "./world";
-import { createCameraRig } from "./cameraRig";
-import { truckScreen } from "./truckScreen";
 import { detectQuality } from "./quality";
 import { observeTheme, paletteForDocument } from "./palette";
-import type { Journey } from "./journeys";
+import { SCENES } from "./scenes";
+import type { SceneName } from "./types";
 
 type SceneCanvasProps = {
-  /** Quiet framing for the funnel and #privacy, where the page is a form. */
+  /** Which world this canvas shows. Resolved from the registry below, which
+      lives behind the same lazy boundary as Three.js itself. */
+  scene: SceneName;
+  /** Quiet framing for pages that are a form or a document, not a scroll. */
   ambient?: boolean;
-  /** Which page's choreography to drive. */
-  journey: Journey;
-  /** Called if the GPU drops the context — the parent swaps in the gradient. */
+  /** Called if the GPU drops the context — the parent keeps the gradient. */
   onLost?: () => void;
 };
 
-/** Scroll progress the camera parks at when the page is not the marketing scroll. */
+/** Scroll progress the camera parks at when the page is not a scroll. */
 const AMBIENT_PROGRESS = 0.14;
 
+/**
+ * Hosts a scene: the renderer, the frame loop, the visibility pause and the
+ * fade-in. Everything true of any scene, and nothing true of a particular one.
+ *
+ * What is on screen — roads, vehicles, buildings, the camera and its
+ * choreography — belongs to the SceneFactory this is handed.
+ */
 export default function SceneCanvas({
+  scene: sceneName,
   ambient = false,
-  journey,
   onLost,
 }: SceneCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -40,7 +46,6 @@ export default function SceneCanvas({
 
     const reduced = prefersReducedMotion();
     const quality = detectQuality();
-    const palette = paletteForDocument();
 
     let renderer: THREE.WebGLRenderer;
     try {
@@ -58,31 +63,24 @@ export default function SceneCanvas({
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, quality.maxDpr));
     renderer.setSize(window.innerWidth, window.innerHeight, false);
 
-    const camera = new THREE.PerspectiveCamera(
-      28,
-      window.innerWidth / window.innerHeight,
-      0.5,
-      600,
-    );
-
-    const world = createWorld(palette, quality, journey);
-    const rig = createCameraRig(camera, world.follow, world.truckAnchors, journey, {
+    const instance = SCENES[sceneName]({
+      palette: paletteForDocument(),
+      quality,
+      aspect: window.innerWidth / window.innerHeight,
       reduced,
     });
-    rig.setProgress(0);
-    rig.snap();
+    instance.resize(window.innerWidth, window.innerHeight);
 
-    const stopTheme = observeTheme((next) => world.setPalette(next));
+    const stopTheme = observeTheme((next) => instance.setPalette(next));
 
     const unsubscribe = store.subscribe((progress) => {
-      rig.setProgress(ambientRef.current ? AMBIENT_PROGRESS : progress);
+      instance.setProgress(ambientRef.current ? AMBIENT_PROGRESS : progress);
     });
 
     const onResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, quality.maxDpr));
       renderer.setSize(window.innerWidth, window.innerHeight, false);
+      instance.resize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener("resize", onResize);
 
@@ -134,43 +132,12 @@ export default function SceneCanvas({
       });
     };
 
-    // The vehicle's own centre, projected each frame so the readouts can flank
-    // it. Centre rather than roof: the readouts sit either side now, and
-    // anchoring off a point that is not the visual middle makes the two gaps
-    // unequal. Read from the asset's anchors so a swapped model still tracks.
-    const roofLocal =
-      world.truckAnchors.whole?.clone() ?? new THREE.Vector3(-6, 2, 0);
-    const roofWorld = new THREE.Vector3();
-    const projected = new THREE.Vector3();
-
-    function publishTruckScreen() {
-      const cos = Math.cos(world.follow.heading);
-      const sin = Math.sin(world.follow.heading);
-      roofWorld.set(
-        world.follow.position.x + cos * roofLocal.x + sin * roofLocal.z,
-        world.follow.position.y + roofLocal.y,
-        world.follow.position.z - sin * roofLocal.x + cos * roofLocal.z,
-      );
-      projected.copy(roofWorld).project(camera);
-      const onScreen =
-        projected.z < 1 && Math.abs(projected.x) < 1.1 && Math.abs(projected.y) < 1.1;
-      truckScreen.publish({
-        x: (projected.x * 0.5 + 0.5) * window.innerWidth,
-        y: (-projected.y * 0.5 + 0.5) * window.innerHeight,
-        visible: onScreen,
-      });
-    }
-
     function loop() {
       if (!running) return;
       frame = requestAnimationFrame(loop);
       timer.update();
-      const delta = timer.getDelta();
-      const elapsed = timer.getElapsed();
-      world.update(elapsed, delta, store.get());
-      rig.update(elapsed, delta);
-      renderer.render(world.scene, camera);
-      publishTruckScreen();
+      instance.update(timer.getElapsed(), timer.getDelta());
+      renderer.render(instance.scene, instance.camera);
       reveal();
     }
 
@@ -189,8 +156,7 @@ export default function SceneCanvas({
       canvas.removeEventListener("webglcontextlost", onContextLost);
       unsubscribe();
       stopTheme();
-      truckScreen.reset(); // the card must not linger over a torn-down scene
-      world.dispose();
+      instance.dispose();
       renderer.dispose();
       /* Deliberately no forceContextLoss(). It looks like the right way to
          hand a discarded canvas's context back, but StrictMode's double-invoke
@@ -200,10 +166,7 @@ export default function SceneCanvas({
          Dropping the detached canvas is enough; the browser reclaims the
          context, verified over twenty site/deck swaps with none lost. */
     };
-    // A journey change rebuilds the whole world. In practice the keyed mount in
-    // SceneBackdrop means a new canvas gets here instead, which is the point —
-    // see the note there.
-  }, [store, journey, onLost]);
+  }, [store, sceneName, onLost]);
 
   return (
     <canvas
