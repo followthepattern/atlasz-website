@@ -1,6 +1,7 @@
 import type * as THREE from "three";
 import type { ScenePalette } from "./palette";
 import type { QualitySettings } from "./quality";
+import type { ScreenSize } from "./viewport";
 
 /* The contract between a scene and the canvas that hosts it.
  *
@@ -13,9 +14,10 @@ import type { QualitySettings } from "./quality";
 export type SceneContext = {
   palette: ScenePalette;
   quality: QualitySettings;
-  /** Viewport aspect at construction. Scenes that frame differently on a
-      narrow window read it here; `resize` reports every change after. */
+  /** Viewport aspect at construction. `resize` reports every change after. */
   aspect: number;
+  /** Which viewport bucket the window is in, on Tailwind's breakpoints. */
+  screen: ScreenSize;
   /** The visitor asked for reduced motion: no easing, no idle drift. */
   reduced: boolean;
 };

@@ -6,6 +6,7 @@ import { useScrollStore } from "@/motion/ScrollProvider";
 import { prefersReducedMotion } from "@/motion/usePrefersReducedMotion";
 import { detectQuality } from "./quality";
 import { observeTheme, paletteForDocument } from "./palette";
+import { screenSize } from "./viewport";
 import type { SceneFactory } from "./types";
 
 /** Scroll progress the camera parks at when the page is not a scroll. */
@@ -65,6 +66,7 @@ export function useSceneHost(createScene: SceneFactory, options: SceneHostOption
       palette: paletteForDocument(),
       quality,
       aspect: window.innerWidth / window.innerHeight,
+      screen: screenSize(),
       reduced,
     });
     instance.resize(window.innerWidth, window.innerHeight);

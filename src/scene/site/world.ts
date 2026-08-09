@@ -5,6 +5,7 @@ import { proceduralWarehouse } from "../assets/warehouse";
 import { proceduralTrees } from "../assets/trees";
 import type { SceneAsset } from "../assets/types";
 import { buildGrid, placeOnRoute, treePlacements, type Follow } from "../road";
+import { screenSize, type ScreenSize } from "../viewport";
 import { createCameraRig, type Framing } from "../cameraRig";
 import { truckScreen } from "../truckScreen";
 import type { SceneContext, SceneInstance, SceneFactory } from "../types";
@@ -31,8 +32,37 @@ const WAREHOUSE_AT = 0.62;
    straight line instead of crossing the yard to reach it. */
 const WAREHOUSE_OFFSET = 26; // metres from the route centreline
 
-const from = (base: THREE.Vector3, x: number, y: number, z: number) =>
-  base.clone().add(new THREE.Vector3(x, y, z));
+/**
+ * How far back the camera stands, per viewport bucket.
+ *
+ * A vertical field of view means the width a framing gets is the aspect
+ * ratio's to give. These framings are authored against a wide desktop window;
+ * at 375px the visible width is about 4.7 m of a 17.7 m rig, so the frame lands
+ * on the middle of the trailer rather than on a vehicle.
+ *
+ * The fix is one number per bucket, not a second set of framings. `lg` and `xl`
+ * are 1 — a multiply by one, so every desktop window comes out bit-for-bit as
+ * authored and no amount of tuning here can drift a composition already signed
+ * off. Narrower buckets stand further back along the same bearing.
+ *
+ * Distance rather than field of view on purpose: widening the lens to fit a
+ * long vehicle stretches it at the edges, where the cab is.
+ */
+const DISTANCE = {
+  xs: 2.5,
+  md: 1.6,
+  lg: 1,
+  xl: 1,
+} as const satisfies Record<ScreenSize, number>;
+
+/* Scaling the whole offset keeps each framing's bearing — atan2 of scaled
+   components is unchanged — so the single-crossing sweep survives untouched.
+   The look target is deliberately not scaled: the camera backs off, the aim
+   stays where it was authored. */
+const offsetBy =
+  (distance: number) =>
+  (base: THREE.Vector3, x: number, y: number, z: number) =>
+    base.clone().add(new THREE.Vector3(x * distance, y * distance, z * distance));
 
 /**
  * Framings are built from the truck's own anchor points, never from bare
@@ -45,8 +75,12 @@ const from = (base: THREE.Vector3, x: number, y: number, z: number) =>
  *   0.70 -11°   0.88  -33°   1.00  -50°
  *          ^ the single crossing lives between 0.48 and 0.70
  */
-function buildFramings(anchors: Record<string, THREE.Vector3>): Framing[] {
+function buildFramings(
+  anchors: Record<string, THREE.Vector3>,
+  distance: number,
+): Framing[] {
   const trailer = anchors.trailer ?? new THREE.Vector3(-7.4, 2.5, 0);
+  const from = offsetBy(distance);
 
   return [
     // Hero — near side-on, so the opening frame reads as a full profile with
@@ -105,6 +139,7 @@ export const createSiteScene: SceneFactory = ({
   palette,
   quality,
   aspect,
+  screen,
   reduced,
 }: SceneContext): SceneInstance => {
   const scene = new THREE.Scene();
@@ -158,10 +193,15 @@ export const createSiteScene: SceneFactory = ({
 
   driveTo(0);
 
-  const rig = createCameraRig(camera, follow, buildFramings(truck.anchorPoints), {
-    reduced,
-    label: "site",
-  });
+  // The bucket the framings were last built for. Tracked so `resize` can tell a
+  // breakpoint crossing from the hundreds of intervening pixel changes.
+  let bucket: ScreenSize = screen;
+  const rig = createCameraRig(
+    camera,
+    follow,
+    buildFramings(truck.anchorPoints, DISTANCE[bucket]),
+    { reduced, label: "site" },
+  );
   rig.setProgress(0);
   rig.snap();
 
@@ -220,6 +260,21 @@ export const createSiteScene: SceneFactory = ({
       viewHeight = height;
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
+
+      /* Re-frame only when the window crosses a breakpoint, never on the
+         intervening pixels. Dragging a window edge fires this continuously,
+         and rebuilding the framings on every frame of a drag would have the
+         camera creeping the whole time the visitor is still dragging.
+
+         The bucket comes from the helper rather than from `width`, so it is
+         resolving the same number a `lg:` class does — `width` here is
+         innerWidth, which counts the scrollbar, and media queries do not. Near
+         a breakpoint that difference is enough for the two to disagree. */
+      const next = screenSize();
+      if (next !== bucket) {
+        bucket = next;
+        rig.setFramings(buildFramings(truck.anchorPoints, DISTANCE[bucket]));
+      }
     },
     setPalette(next) {
       applyPalette([grid.material], next);

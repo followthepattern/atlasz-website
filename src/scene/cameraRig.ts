@@ -23,6 +23,8 @@ function smoothstep(t: number) {
 
 export type CameraRig = {
   setProgress(progress: number): void;
+  /** Swap the choreography without rebuilding the scene — see setFramings. */
+  setFramings(next: Framing[]): void;
   update(elapsed: number, delta: number): void;
   /** Jump straight to the current framing — used under reduced motion. */
   snap(): void;
@@ -62,11 +64,14 @@ function assertSingleCrossing(framings: Framing[], label: string) {
 export function createCameraRig(
   camera: THREE.PerspectiveCamera,
   follow: Follow,
-  framings: Framing[],
+  initialFramings: Framing[],
   options: { reduced?: boolean; label?: string } = {},
 ): CameraRig {
-  if (import.meta.env.DEV) assertSingleCrossing(framings, options.label ?? "scene");
+  const label = options.label ?? "scene";
+  let framings = initialFramings;
+  if (import.meta.env.DEV) assertSingleCrossing(framings, label);
 
+  let lastProgress = 0;
   const localOffset = framings[0].offset.clone();
   const localLook = framings[0].lookOffset.clone();
   const desiredPosition = new THREE.Vector3();
@@ -88,6 +93,7 @@ export function createCameraRig(
 
   function setProgress(progress: number) {
     const p = Math.min(1, Math.max(0, progress));
+    lastProgress = p;
     const first = framings[0];
     const last = framings[framings.length - 1];
 
@@ -150,5 +156,20 @@ export function createCameraRig(
     camera.lookAt(currentTarget);
   }
 
-  return { setProgress, update, snap };
+  /**
+   * Replace the choreography in place, re-resolving against the scroll position
+   * the visitor is already at.
+   *
+   * A scene calls this when the viewport crosses a breakpoint — a framing set
+   * authored for a desktop does not fit a phone. Swapping framings rather than
+   * rebuilding the scene matters: a rebuild would drop the WebGL context and
+   * fade a fresh canvas in, halfway down a page someone is reading.
+   */
+  function setFramings(next: Framing[]) {
+    framings = next;
+    if (import.meta.env.DEV) assertSingleCrossing(next, label);
+    setProgress(lastProgress);
+  }
+
+  return { setProgress, setFramings, update, snap };
 }
