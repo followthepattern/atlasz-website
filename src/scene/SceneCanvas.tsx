@@ -192,10 +192,17 @@ export default function SceneCanvas({
       truckScreen.reset(); // the card must not linger over a torn-down scene
       world.dispose();
       renderer.dispose();
+      /* Deliberately no forceContextLoss(). It looks like the right way to
+         hand a discarded canvas's context back, but StrictMode's double-invoke
+         runs this cleanup against a canvas React then mounts again — and a
+         renderer built over a force-lost context throws, which lands in the
+         onLost path and disables the scene for the rest of the session.
+         Dropping the detached canvas is enough; the browser reclaims the
+         context, verified over twenty site/deck swaps with none lost. */
     };
-    // A journey change rebuilds the whole world, which is what navigating
-    // between the marketing scroll and the deck should do — they are different
-    // roads, not the same one framed differently.
+    // A journey change rebuilds the whole world. In practice the keyed mount in
+    // SceneBackdrop means a new canvas gets here instead, which is the point —
+    // see the note there.
   }, [store, journey, onLost]);
 
   return (

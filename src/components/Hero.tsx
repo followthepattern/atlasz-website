@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/Button";
+import { Link } from "react-router-dom";
+import { buttonClasses } from "@/components/ui/Button";
 import { Text } from "@/components/ui/Text";
 import { ArrowRight } from "@/icons";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
@@ -7,17 +8,13 @@ import { SplitText } from "@/motion/SplitText";
 import { useReveal } from "@/motion/useReveal";
 import { DURATION, STAGGER } from "@/motion/tokens";
 
-type HeroProps = {
-  onHome: () => void;
-  onStart: () => void;
-};
 
 /**
  * The opening frame. Replaces the SVG Europe map hero — the 3D scene now lives
  * behind the whole page (see SceneBackdrop), so this is pure typography and
  * floating UI over it.
  */
-export function Hero({ onHome, onStart }: HeroProps) {
+export function Hero() {
   const { t } = useTranslation();
   const ref = useReveal<HTMLDivElement>({
     stagger: STAGGER.loose,
@@ -37,13 +34,12 @@ export function Hero({ onHome, onStart }: HeroProps) {
       />
 
       <header className="relative z-10 mx-auto flex w-full max-w-5xl items-center justify-between px-6 pt-8">
-        <button
-          type="button"
-          onClick={onHome}
+        <Link
+          to="/"
           className="text-lg font-semibold tracking-tight text-fg hover:opacity-80"
         >
           atlasz
-        </button>
+        </Link>
         <LanguageSwitcher />
       </header>
 
@@ -82,10 +78,10 @@ export function Hero({ onHome, onStart }: HeroProps) {
           </Text>
 
           <div data-reveal className="relative">
-            <Button variant="primary" onClick={onStart}>
+            <Link to="/subscribe" className={buttonClasses("primary")}>
               {t("hero.cta")}
               <ArrowRight className="h-4 w-4" />
-            </Button>
+            </Link>
           </div>
         </div>
       </div>

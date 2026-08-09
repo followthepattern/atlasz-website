@@ -25,6 +25,12 @@ export type Framing = {
  * inheriting the other's pacing.
  */
 export type Journey = {
+  /**
+   * Stable identity, used to key the canvas. Two journeys are two scenes, not
+   * one scene re-aimed, so switching between them has to replace the canvas
+   * rather than rebuild a world on top of the outgoing one's GL context.
+   */
+  name: string;
   /** Route parameter the truck sits at when scroll progress is 0. */
   truckFrom: number;
   /** Route parameter it reaches at progress 1. */
@@ -124,6 +130,7 @@ function buildLandingFramings(anchors: Record<string, THREE.Vector3>): Framing[]
  * framings and a document some five viewports tall.
  */
 export const landingJourney: Journey = {
+  name: "landing",
   truckFrom: 0.3,
   truckTo: 0.612,
   buildFramings: buildLandingFramings,
@@ -136,17 +143,22 @@ export const landingJourney: Journey = {
  * centred truck sits straight underneath it. Panning the camera's aim to the
  * left pushes the subject to the right, into the empty half.
  *
+ * `fraction` is of the viewing distance, not a distance itself. A fixed number
+ * of metres is a different angle from every framing — the same 13 m that reads
+ * as a third of the frame from 34 m away swings past the horizon from 16 m —
+ * so the deck's four shots would each sit the truck somewhere different.
+ *
  * Computed in the truck's local frame, which is the world frame rotated about
  * y — a rotation preserves angles, so the screen-right worked out here survives
  * the transform the rig applies later.
  */
-function biasAim(offset: THREE.Vector3, look: THREE.Vector3, amount: number) {
+function biasAim(offset: THREE.Vector3, look: THREE.Vector3, fraction: number) {
   const view = look.clone().sub(offset);
   // Screen-right for a y-up camera is normalize(cross(forward, up)), which for
   // up = (0,1,0) reduces to (-z, 0, x). Flattened, so a high framing does not
   // shorten the pan.
   const right = new THREE.Vector3(-view.z, 0, view.x).normalize();
-  return look.clone().addScaledVector(right, -amount);
+  return look.clone().addScaledVector(right, -view.length() * fraction);
 }
 
 /**
@@ -166,10 +178,16 @@ function biasAim(offset: THREE.Vector3, look: THREE.Vector3, amount: number) {
 function buildDeckFramings(anchors: Record<string, THREE.Vector3>): Framing[] {
   const trailer = anchors.trailer ?? new THREE.Vector3(-7.4, 2.5, 0);
 
-  /* How far the truck sits right of centre, in metres of pan at the look
-     target. Enough to clear the copy band without pushing the vehicle off the
-     edge of the frame. */
-  const BIAS = 13;
+  /* How far the truck sits right of centre, as a fraction of the viewing
+     distance.
+
+     At the title framing that works out as follows: the camera is ~31 m off,
+     which on a 16:9 window at this 28° vertical field of view is about 30 m of
+     visible width, and the rig is ~18 m long. 0.28 slides the aim ~8.7 m down
+     the trailer, which leaves the vehicle sitting across the right-hand half
+     with the cab comfortably inside the frame. Much past 0.3 and the cab
+     starts to run off the right edge. */
+  const BIAS = 0.28;
 
   const framing = (
     at: number,
@@ -179,12 +197,18 @@ function buildDeckFramings(anchors: Record<string, THREE.Vector3>): Framing[] {
   ): Framing => ({ at, offset, lookOffset: biasAim(offset, look, bias) });
 
   return [
-    // Title — a close profile with the livery square to camera, the same
-    // opening note the landing page strikes, aimed high so the truck rides low.
+    /* Title — a wide profile of the whole rig, from above the treeline.
+
+       Height is doing real work here, not styling. The verge starts 18 m off
+       the centreline and scatters out to 34 m, so a camera standing far enough
+       back to frame all 17 m of the vehicle stands among the conifers — and at
+       this point on the route one sits directly in the lens. The tallest tree
+       reaches about 9 units, so anything above ~11 looks over the whole verge.
+       Dropping in closer instead only trades the tree for a wall of trailer. */
     framing(
       0,
-      from(trailer, 1.7, 1.6, 34), // +87°
-      from(trailer, 1.7, 4.2, 0),
+      from(trailer, 3, 9, 30), // +84°
+      from(trailer, 3, 1, 0),
     ),
     // Standing back for the two copy-heavy sections. Still facility side.
     framing(
@@ -211,6 +235,7 @@ function buildDeckFramings(anchors: Record<string, THREE.Vector3>): Framing[] {
 }
 
 export const deckJourney: Journey = {
+  name: "deck",
   truckFrom: 0.45,
   truckTo: 0.612,
   buildFramings: buildDeckFramings,

@@ -1,11 +1,12 @@
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { Subheading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
 
 const FTP_URL = "https://followthepattern.net";
 const FTP_CONTACT_URL = "https://followthepattern.net/contact";
 
-export function Footer({ onPrivacy }: { onPrivacy?: () => void }) {
+export function Footer() {
   const { t } = useTranslation();
   const year = new Date().getFullYear();
 
@@ -38,18 +39,9 @@ export function Footer({ onPrivacy }: { onPrivacy?: () => void }) {
             >
               {t("footer.links.contact")}
             </a>
-            <a
-              href="#privacy"
-              onClick={(e) => {
-                if (onPrivacy) {
-                  e.preventDefault();
-                  onPrivacy();
-                }
-              }}
-              className="text-muted hover:text-fg"
-            >
+            <Link to="/privacy" className="text-muted hover:text-fg">
               {t("footer.links.privacy")}
-            </a>
+            </Link>
           </nav>
         </div>
       </div>

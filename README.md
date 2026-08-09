@@ -37,15 +37,25 @@ Copy `.env.example` to `.env` and set `VITE_API_BASE_URL` for production builds.
 
 The build output in `dist/` is fully static.
 
+**The host must serve `index.html` for unknown paths.** The site routes on real
+paths (`/subscribe`, `/privacy`, `/early-partner`), so a visitor who reloads on
+one — or opens a shared link to one — asks the host for a file that does not
+exist. Without the fallback they get a 404 on every page but the landing one.
+
 - **Vercel** — Framework preset: *Vite*, build command `npm run build`, output
-  directory `dist`. No env var is required if the backend is the default
+  directory `dist`. The fallback is already configured in `vercel.json`.
+  No env var is required if the backend is the default
   `https://app.atlasz.eu` — `VITE_API_BASE_URL` falls back to it when unset. Set
   `VITE_API_BASE_URL` only to point at a different backend. Do **not** set it to
   an empty string in production: empty means same-origin and `POST /api/subscribe`
   would hit the Vercel domain instead of the backend (empty is for dev only).
 - **S3 (static hosting)** — `npm run build`, then upload `dist/` to the bucket
   (e.g. `aws s3 sync dist/ s3://<bucket> --delete`) with static website hosting
-  enabled. Set `VITE_API_BASE_URL` before building if the backend differs from
-  the default.
+  enabled. Set both the index document *and the error document* to
+  `index.html`: S3 website hosting has no rewrite rules, and pointing the error
+  document at the app is what makes a deep link resolve. Behind CloudFront,
+  prefer a custom error response mapping 403/404 to `/index.html` with a 200,
+  so deep links do not go out with an error status. Set `VITE_API_BASE_URL`
+  before building if the backend differs from the default.
 
 The backend must allow the deployed origin in `ATLASZ_SERVER_ALLOWED_ORIGINS` (CORS).

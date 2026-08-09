@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Field } from "@/components/ui/Field";
@@ -7,10 +8,7 @@ import { Checkbox } from "@/components/ui/Checkbox";
 import { Heading } from "@/components/ui/Heading";
 import { Text } from "@/components/ui/Text";
 import { ArrowRight, Check } from "@/icons";
-import { Footer } from "@/components/Footer";
-import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useScrollRefresh } from "@/motion/ScrollProvider";
-import { navigate } from "@/router";
 import { QUIZ } from "@/quiz";
 import { subscribe } from "@/api";
 
@@ -88,175 +86,162 @@ export function SubscribePage() {
   }
 
   return (
-    <div className="flex min-h-full flex-col">
-      <header className="mx-auto flex w-full max-w-3xl items-center justify-between px-6 pt-8">
-        <button
-          type="button"
-          onClick={() => navigate("landing")}
-          className="text-lg font-semibold tracking-tight text-fg hover:opacity-80"
-        >
-          atlasz
-        </button>
-        <LanguageSwitcher />
-      </header>
-
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center px-6 py-16">
-        {stage === "quiz" && (
-          <section className="flex flex-col gap-6">
-            <div className="flex items-center gap-2">
-              {QUIZ.map((q, i) => (
-                <span
-                  key={q.id}
-                  className={`h-1 flex-1 rounded-full ${
-                    i <= step ? "bg-accent" : "bg-fg/15"
-                  }`}
-                />
-              ))}
-            </div>
-            <Text className="text-xs">
-              {t("quiz.progress", { current: step + 1, total: QUIZ.length })}
-            </Text>
-            <Heading>{t(`quiz.${QUIZ[step].id}.question`)}</Heading>
-            <div className="flex flex-col gap-2">
-              {QUIZ[step].options.map((opt) => {
-                const selected = answers[QUIZ[step].id] === opt;
-                return (
-                  <button
-                    key={opt}
-                    type="button"
-                    onClick={() => answer(QUIZ[step].id, opt)}
-                    className={`flex items-center justify-between rounded-lg border px-4 py-3 text-left text-sm transition-colors ${
-                      selected
-                        ? "border-accent bg-fg/5 text-fg"
-                        : "border-hairline text-fg hover:bg-fg/5"
-                    }`}
-                  >
-                    {t(`quiz.${QUIZ[step].id}.options.${opt}`)}
-                    <ArrowRight className="h-4 w-4 text-muted" />
-                  </button>
-                );
-              })}
-            </div>
-            {step > 0 && (
+    <>
+    {stage === "quiz" && (
+      <section className="flex flex-col gap-6">
+        <div className="flex items-center gap-2">
+          {QUIZ.map((q, i) => (
+            <span
+              key={q.id}
+              className={`h-1 flex-1 rounded-full ${
+                i <= step ? "bg-accent" : "bg-fg/15"
+              }`}
+            />
+          ))}
+        </div>
+        <Text className="text-xs">
+          {t("quiz.progress", { current: step + 1, total: QUIZ.length })}
+        </Text>
+        <Heading>{t(`quiz.${QUIZ[step].id}.question`)}</Heading>
+        <div className="flex flex-col gap-2">
+          {QUIZ[step].options.map((opt) => {
+            const selected = answers[QUIZ[step].id] === opt;
+            return (
               <button
+                key={opt}
                 type="button"
-                onClick={() => setStep(step - 1)}
-                className="self-start text-xs text-muted hover:text-fg"
+                onClick={() => answer(QUIZ[step].id, opt)}
+                className={`flex items-center justify-between rounded-lg border px-4 py-3 text-left text-sm transition-colors ${
+                  selected
+                    ? "border-accent bg-fg/5 text-fg"
+                    : "border-hairline text-fg hover:bg-fg/5"
+                }`}
               >
-                {t("quiz.back")}
+                {t(`quiz.${QUIZ[step].id}.options.${opt}`)}
+                <ArrowRight className="h-4 w-4 text-muted" />
               </button>
-            )}
-          </section>
+            );
+          })}
+        </div>
+        {step > 0 && (
+          <button
+            type="button"
+            onClick={() => setStep(step - 1)}
+            className="self-start text-xs text-muted hover:text-fg"
+          >
+            {t("quiz.back")}
+          </button>
         )}
+      </section>
+    )}
 
-        {stage === "form" && (
-          <section className="flex flex-col gap-6">
-            <div className="flex flex-col gap-2">
-              <Heading>{t("form.heading")}</Heading>
-              <Text>{t("form.subtitle")}</Text>
+    {stage === "form" && (
+      <section className="flex flex-col gap-6">
+        <div className="flex flex-col gap-2">
+          <Heading>{t("form.heading")}</Heading>
+          <Text>{t("form.subtitle")}</Text>
+        </div>
+
+        <div className="glass flex flex-col gap-4 rounded-xl p-6">
+          <Field label={t("form.name.label")} error={errors.name}>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              invalid={!!errors.name}
+              placeholder={t("form.name.placeholder")}
+              autoComplete="name"
+            />
+          </Field>
+          <Field label={t("form.email.label")} error={errors.email}>
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              invalid={!!errors.email}
+              placeholder={t("form.email.placeholder")}
+              autoComplete="email"
+            />
+          </Field>
+          <Field
+            label={t("form.phone.label")}
+            error={errors.phone}
+            hint={t("form.phone.hint")}
+          >
+            <Input
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              invalid={!!errors.phone}
+              placeholder={t("form.phone.placeholder")}
+              autoComplete="tel"
+            />
+          </Field>
+
+          <div className="flex flex-col gap-3 pt-1">
+            <div className="flex items-start gap-3">
+              <Checkbox
+                checked={gdpr}
+                onChange={() => setGdpr((v) => !v)}
+                aria-label={t("form.gdpr.link")}
+              />
+              <span className="text-sm text-muted">
+                {t("form.gdpr.before")}
+                {/* Opened in a new tab on purpose: reading the policy must not
+                    cost the visitor the form they have part-filled. */}
+                <Link
+                  to="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-fg underline hover:opacity-80"
+                >
+                  {t("form.gdpr.link")}
+                </Link>
+                {t("form.gdpr.after")} <span className="text-negative">*</span>
+              </span>
             </div>
+            {errors.gdpr && <span className="text-xs text-negative">{errors.gdpr}</span>}
 
-            <div className="glass flex flex-col gap-4 rounded-xl p-6">
-              <Field label={t("form.name.label")} error={errors.name}>
-                <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  invalid={!!errors.name}
-                  placeholder={t("form.name.placeholder")}
-                  autoComplete="name"
-                />
-              </Field>
-              <Field label={t("form.email.label")} error={errors.email}>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  invalid={!!errors.email}
-                  placeholder={t("form.email.placeholder")}
-                  autoComplete="email"
-                />
-              </Field>
-              <Field
-                label={t("form.phone.label")}
-                error={errors.phone}
-                hint={t("form.phone.hint")}
-              >
-                <Input
-                  type="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  invalid={!!errors.phone}
-                  placeholder={t("form.phone.placeholder")}
-                  autoComplete="tel"
-                />
-              </Field>
-
-              <div className="flex flex-col gap-3 pt-1">
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    checked={gdpr}
-                    onChange={() => setGdpr((v) => !v)}
-                    aria-label={t("form.gdpr.link")}
-                  />
-                  <span className="text-sm text-muted">
-                    {t("form.gdpr.before")}
-                    <a
-                      href="#privacy"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-fg underline hover:opacity-80"
-                    >
-                      {t("form.gdpr.link")}
-                    </a>
-                    {t("form.gdpr.after")} <span className="text-negative">*</span>
-                  </span>
-                </div>
-                {errors.gdpr && <span className="text-xs text-negative">{errors.gdpr}</span>}
-
-                <div className="flex items-start gap-3">
-                  <Checkbox
-                    checked={marketing}
-                    onChange={() => setMarketing((v) => !v)}
-                    aria-label={t("form.marketing")}
-                  />
-                  <span className="text-sm text-muted">{t("form.marketing")}</span>
-                </div>
-              </div>
-
-              {submitError && (
-                <div className="rounded-md bg-negative-bg px-3 py-2 text-sm text-negative">
-                  {submitError}
-                </div>
-              )}
-
-              <Button
-                variant="primary"
-                onClick={handleSubmit}
-                disabled={submitting}
-                className="mt-1"
-              >
-                {submitting ? t("form.submitting") : t("form.submit")}
-              </Button>
+            <div className="flex items-start gap-3">
+              <Checkbox
+                checked={marketing}
+                onChange={() => setMarketing((v) => !v)}
+                aria-label={t("form.marketing")}
+              />
+              <span className="text-sm text-muted">{t("form.marketing")}</span>
             </div>
-          </section>
-        )}
+          </div>
 
-        {stage === "success" && (
-          <section className="flex flex-col items-start gap-5">
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-positive-bg text-positive">
-              <Check className="h-6 w-6" />
-            </span>
-            <Heading>{t("success.heading")}</Heading>
-            <Text className="max-w-lg text-base">
-              {name
-                ? t("success.bodyWithName", { name: name.trim().split(" ")[0], email })
-                : t("success.body", { email })}
-            </Text>
-          </section>
-        )}
-      </main>
+          {submitError && (
+            <div className="rounded-md bg-negative-bg px-3 py-2 text-sm text-negative">
+              {submitError}
+            </div>
+          )}
 
-      <Footer />
-    </div>
+          <Button
+            variant="primary"
+            onClick={handleSubmit}
+            disabled={submitting}
+            className="mt-1"
+          >
+            {submitting ? t("form.submitting") : t("form.submit")}
+          </Button>
+        </div>
+      </section>
+    )}
+
+    {stage === "success" && (
+      <section className="flex flex-col items-start gap-5">
+        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-positive-bg text-positive">
+          <Check className="h-6 w-6" />
+        </span>
+        <Heading>{t("success.heading")}</Heading>
+        <Text className="max-w-lg text-base">
+          {name
+            ? t("success.bodyWithName", { name: name.trim().split(" ")[0], email })
+            : t("success.body", { email })}
+        </Text>
+      </section>
+    )}
+    </>
   );
 }

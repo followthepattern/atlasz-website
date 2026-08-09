@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useState } from "react";
 import { isWebGLAvailable } from "./quality";
-import { landingJourney, type Journey } from "./journeys";
+import type { Journey } from "./journeys";
 
 /* Three.js is ~150 KB gzip. Loading it lazily keeps it off the critical path:
    the hero copy and the CTA paint on the original bundle and the scene fades in
@@ -16,10 +16,10 @@ const SceneCanvas = lazy(() => import("./SceneCanvas"));
  */
 export function SceneBackdrop({
   ambient = false,
-  journey = landingJourney,
+  journey,
 }: {
   ambient?: boolean;
-  journey?: Journey;
+  journey: Journey;
 }) {
   const [supported] = useState(isWebGLAvailable);
   const [lost, setLost] = useState(false);
@@ -30,7 +30,18 @@ export function SceneBackdrop({
       <div className="scene-backdrop" aria-hidden="true" />
       {supported && !lost ? (
         <Suspense fallback={null}>
-          <SceneCanvas ambient={ambient} journey={journey} onLost={onLost} />
+          {/* Keyed on the journey, so a canvas can never be handed a second
+              one. Each scene-owning layout passes a fixed journey, so in
+              practice this never fires — it is here because the failure it
+              prevents is silent: Three.js builds the new renderer over the old
+              one's live WebGL context and every frame after raises
+              INVALID_OPERATION, with nothing thrown and nothing logged. */}
+          <SceneCanvas
+            key={journey.name}
+            ambient={ambient}
+            journey={journey}
+            onLost={onLost}
+          />
         </Suspense>
       ) : null}
     </>

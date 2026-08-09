@@ -1,7 +1,6 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { SplitText } from "@/motion/SplitText";
 import { useReveal } from "@/motion/useReveal";
-import { useScrollStore } from "@/motion/ScrollProvider";
 import { DURATION, STAGGER } from "@/motion/tokens";
 
 /* The Early Partner Program deck, presented live during a demo.
@@ -14,8 +13,6 @@ import { DURATION, STAGGER } from "@/motion/tokens";
  * a slide rail that jumped between five absolutely-positioned <section>s. The
  * scroll is the sequencer now, and the 3D scene behind it is the reason the
  * page exists rather than the PDF. */
-
-const SECTIONS = 5;
 
 /** The deck's kicker label — a mono rule-and-caps line above every heading. */
 function Eyebrow({ children }: { children: ReactNode }) {
@@ -85,34 +82,9 @@ function Slide({ children }: { children: ReactNode }) {
   );
 }
 
-/** Scroll position as `01 / 05`, with a hairline fill. Presenter's aid. */
-function ProgressRail() {
-  const store = useScrollStore();
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => store.subscribe(setProgress), [store]);
-
-  const index = Math.min(SECTIONS - 1, Math.round(progress * (SECTIONS - 1)));
-  const pad = (n: number) => String(n).padStart(2, "0");
-
-  return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-6 z-20 flex items-center justify-center gap-4">
-      <div className="h-px w-40 overflow-hidden bg-fg/15">
-        <div
-          className="h-full origin-left bg-fg/60 transition-transform duration-300 ease-out"
-          style={{ transform: `scaleX(${progress})` }}
-        />
-      </div>
-      <span className="font-mono text-[0.7rem] tracking-[0.12em] text-muted/70">
-        <span className="text-fg">{pad(index + 1)}</span> / {pad(SECTIONS)}
-      </span>
-    </div>
-  );
-}
-
 export function EarlyPartnerPage() {
   return (
-    <div className="flex min-h-full flex-col">
+    <>
       <Slide>
         <div data-reveal className="mb-3 flex items-center gap-4">
           {/* The atlasz lettermark — the same glyph as the favicon. */}
@@ -246,8 +218,6 @@ export function EarlyPartnerPage() {
           amelyet a bemutató után elküldünk.
         </Footnote>
       </Slide>
-
-      <ProgressRail />
-    </div>
+    </>
   );
 }
