@@ -4,11 +4,11 @@ import type { QualitySettings } from "./quality";
 
 /* The contract between a scene and the canvas that hosts it.
  *
- * SceneCanvas owns the renderer, the frame loop, the visibility pause and the
- * fade-in — everything true of any scene. It knows nothing about roads,
+ * `useSceneHost` owns the renderer, the frame loop, the visibility pause and
+ * the fade-in — everything true of any scene. It knows nothing about roads,
  * vehicles or facilities. A scene owns all of that, including its own camera,
- * so two scenes can hold entirely different worlds rather than one world
- * looked at from two angles. */
+ * so each layout's canvas holds an entirely different world rather than one
+ * world looked at from two angles. */
 
 export type SceneContext = {
   palette: ScenePalette;
@@ -34,12 +34,3 @@ export type SceneInstance = {
 
 /** Builds a scene. Every scene module exports one. */
 export type SceneFactory = (context: SceneContext) => SceneInstance;
-
-/**
- * Which scene a layout wants, named rather than imported.
- *
- * A layout that reached for the factory itself would pull Three.js in with it
- * and put ~150 KB gzip of renderer on the critical path — the whole reason
- * SceneCanvas is lazy. A layout names its scene; the lazy chunk resolves it.
- */
-export type SceneName = "landing" | "deck";

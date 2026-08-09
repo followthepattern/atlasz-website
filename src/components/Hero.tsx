@@ -11,7 +11,7 @@ import { DURATION, STAGGER } from "@/motion/tokens";
 
 /**
  * The opening frame. Replaces the SVG Europe map hero — the 3D scene now lives
- * behind the whole page (see SceneBackdrop), so this is pure typography and
+ * behind the whole page (the layout owns it), so this is pure typography and
  * floating UI over it.
  */
 export function Hero() {

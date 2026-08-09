@@ -101,7 +101,7 @@ function buildFramings(anchors: Record<string, THREE.Vector3>): Framing[] {
   ];
 }
 
-export const createLandingScene: SceneFactory = ({
+export const createSiteScene: SceneFactory = ({
   palette,
   quality,
   aspect,
@@ -160,7 +160,7 @@ export const createLandingScene: SceneFactory = ({
 
   const rig = createCameraRig(camera, follow, buildFramings(truck.anchorPoints), {
     reduced,
-    label: "landing",
+    label: "site",
   });
   rig.setProgress(0);
   rig.snap();

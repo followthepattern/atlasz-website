@@ -6,39 +6,37 @@ import { useScrollStore } from "@/motion/ScrollProvider";
 import { prefersReducedMotion } from "@/motion/usePrefersReducedMotion";
 import { detectQuality } from "./quality";
 import { observeTheme, paletteForDocument } from "./palette";
-import { SCENES } from "./scenes";
-import type { SceneName } from "./types";
-
-type SceneCanvasProps = {
-  /** Which world this canvas shows. Resolved from the registry below, which
-      lives behind the same lazy boundary as Three.js itself. */
-  scene: SceneName;
-  /** Quiet framing for pages that are a form or a document, not a scroll. */
-  ambient?: boolean;
-  /** Called if the GPU drops the context — the parent keeps the gradient. */
-  onLost?: () => void;
-};
+import type { SceneFactory } from "./types";
 
 /** Scroll progress the camera parks at when the page is not a scroll. */
 const AMBIENT_PROGRESS = 0.14;
 
+export type SceneHostOptions = {
+  /** Quiet framing for pages that are a form or a document, not a scroll. */
+  ambient?: boolean;
+  /** Called if the GPU drops the context — the caller keeps the gradient. */
+  onLost?: () => void;
+};
+
 /**
- * Hosts a scene: the renderer, the frame loop, the visibility pause and the
- * fade-in. Everything true of any scene, and nothing true of a particular one.
+ * Everything true of hosting any scene: the renderer, the frame loop, the
+ * hidden-tab pause, the resize, the theme watch and the fade-in.
  *
- * What is on screen — roads, vehicles, buildings, the camera and its
- * choreography — belongs to the SceneFactory this is handed.
+ * A hook rather than a component because each layout owns its own canvas
+ * component — one for the marketing site, one for the deck — and what differs
+ * between them is which scene they build, not how a scene is driven. Attach the
+ * returned ref to a `<canvas>`.
  */
-export default function SceneCanvas({
-  scene: sceneName,
-  ambient = false,
-  onLost,
-}: SceneCanvasProps) {
+export function useSceneHost(createScene: SceneFactory, options: SceneHostOptions = {}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const store = useScrollStore();
+
+  const { ambient = false, onLost } = options;
+  // Read through a ref inside the loop: `ambient` flips as the visitor moves
+  // between pages of one layout, and rebuilding the whole scene for a framing
+  // change would tear down a canvas that is working perfectly well.
   const ambientRef = useRef(ambient);
   ambientRef.current = ambient;
-
-  const store = useScrollStore();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -63,7 +61,7 @@ export default function SceneCanvas({
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, quality.maxDpr));
     renderer.setSize(window.innerWidth, window.innerHeight, false);
 
-    const instance = SCENES[sceneName]({
+    const instance = createScene({
       palette: paletteForDocument(),
       quality,
       aspect: window.innerWidth / window.innerHeight,
@@ -166,13 +164,7 @@ export default function SceneCanvas({
          Dropping the detached canvas is enough; the browser reclaims the
          context, verified over twenty site/deck swaps with none lost. */
     };
-  }, [store, sceneName, onLost]);
+  }, [store, createScene, onLost]);
 
-  return (
-    <canvas
-      ref={canvasRef}
-      aria-hidden="true"
-      className="pointer-events-none fixed inset-0 -z-10 h-full w-full"
-    />
-  );
+  return canvasRef;
 }
