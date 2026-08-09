@@ -148,63 +148,88 @@ A slim scroll-progress rail, bottom-centre, with an `01 / 05` counter. The one
 piece of the deck's chrome worth keeping, since the page is driven live. It
 reads from the existing scroll store rather than introducing state.
 
-## Part 3 — a second camera journey
+## Part 3 — a scene per layout
 
-`cameraRig.ts` currently holds both the mechanism (interpolation, damping,
-local→world transform, the single-crossing assertion) and the choreography (the
-six-framing table and its portrait math). Only the choreography differs between
-the two pages, so it moves out.
+> Superseded during implementation. The original design gave both pages one
+> world and varied only the camera, via a `Journey` passed to a shared
+> `createWorld`. That is the wrong seam: the deck is going to grow its own
+> stations and depots, and under a shared world every building added for the
+> deck would have appeared on the marketing page too.
 
-### `src/scene/journeys.ts`
+`SceneCanvas` is a host and nothing more — renderer, frame loop, visibility
+pause, fade-in, all of it true of any scene. Everything on screen, the camera
+included, belongs to the scene module it is handed.
 
-```ts
-export type Journey = {
-  truckFrom: number;   // route t at scroll 0
-  truckTo: number;     // route t at scroll 1
-  buildFramings(anchors: Record<string, THREE.Vector3>, aspect: number): Framing[];
-};
-export const landingJourney: Journey;
-export const deckJourney: Journey;
+```
+src/scene/
+  types.ts            SceneContext / SceneInstance / SceneFactory / SceneName
+  SceneCanvas.tsx     the host; resolves a scene by name from the registry
+  SceneBackdrop.tsx   WebGL availability gate
+  cameraRig.ts        interpolation + damping; framings passed in
+  road.ts             shared kit: route curve, ground grid, treeline
+  assets/             shared model library
+  scenes/
+    index.ts          the registry, behind the lazy boundary
+    landing.ts        the marketing world + its six framings
+    deck.ts           the deck world + its four framings
 ```
 
-`landingJourney` is today's `TRUCK_FROM` / `TRUCK_TO` and the current
-`buildFramings` body **moved verbatim**. The landing page must come out
-bit-for-bit identical; the rig's own invariant comment is emphatic about not
-drifting framings that have already been signed off.
+`scenes/landing.ts` and `scenes/deck.ts` are independent. They are built from
+the same kit today, so they look similar — that duplication is the price of
+letting either diverge without touching the other, and is the point rather
+than an oversight.
 
-`world.ts` and `cameraRig.ts` take a `Journey` instead of module constants.
-`SceneBackdrop` gains a `journey` prop, defaulting to `landingJourney`.
+Shared is a toolkit, never a world. `road.ts` takes the treeline's extent and
+its clearings as options, because the two scenes travel different stretches of
+the same road.
 
-### `deckJourney`
+### What each scene owns
 
-Route span **0.45 → 0.612** rather than 0.30 → 0.612. The truck still arrives at
-the bays, but travels roughly half the distance. Because scroll progress is
-normalised against document height, and the deck page is roughly half the
-landing page's height, this keeps motion-per-scrolled-pixel close to the landing
-page instead of doubling it.
+| | landing | deck |
+|---|---|---|
+| route span | 0.30 → 0.612 | 0.45 → 0.612 |
+| framings | 6 | 4 |
+| aim bias | none | 0.28 of view distance, pushing the truck right of the copy |
+| treeline | 0.18 → 0.78 | 0.34 → 0.78 |
+| readout anchoring | publishes `truckScreen` | none |
 
-Four framings, no portrait math (landscape presenter screen only):
+The deck page is roughly half the landing page's height and scroll progress is
+normalised against document height, so the shorter route span is what keeps
+motion-per-scrolled-pixel comparable rather than doubled.
 
-| at | § | framing | bearing |
-|---|---|---|---|
-| 0 | Title | Close profile, ATLASZ livery square to camera, truck low-right | ≈ +95° |
-| 0.36 | Intro / product | Pull back and up, still facility side | ≈ +30° |
-| 0.70 | Élő bemutató | The single crossing, past the nose | ≈ −15° |
-| 1 | Early Partner | Arrival: truck between the two parked units, warehouse behind | ≈ −50° |
+The deck's title framing sits above the treeline. Standing far enough back to
+frame the whole rig puts the camera among conifers that scatter to 34 m off the
+centreline, with one square in the lens at that point on the route; dropping in
+closer only trades it for a wall of trailer.
 
-Bearings decrease monotonically, so `assertSingleCrossing` still passes: the
-camera changes sides exactly once.
+### Scenes are named, not imported
+
+Layouts pass a `SceneName` string. A layout importing a factory pulls Three.js
+with it and puts ~150 KB gzip on the critical path — the main bundle reached
+323 kB gzip against a 150 kB baseline before this was caught. The registry sits
+behind the same lazy boundary as the renderer.
+
+### One canvas per scene
+
+`SceneBackdrop` keys the canvas on the scene name, and the two scene-owning
+layouts are siblings, so navigating between the site and the deck unmounts one
+canvas and mounts another. This is load-bearing: building a second renderer over
+a live WebGL context raises `INVALID_OPERATION` on every frame after, with
+nothing thrown and nothing logged.
+
+`renderer.forceContextLoss()` looks like the right teardown and is **not** used.
+StrictMode's double-invoke runs cleanup against a canvas React then mounts
+again, and a renderer built over a force-lost context throws into the `onLost`
+path, disabling the scene for the session. Dropping the detached canvas is
+enough — verified over twenty site/deck swaps with no context lost.
 
 ## Verification
 
-1. `npm run typecheck` clean.
-2. Landing page at `#` — hero, all six sections, funnel CTA, truck framing and
-   camera sweep visually unchanged from before the refactor.
-3. `#subscribe` — quiz disabled, form validates, submit path reaches
-   `subscribe()`; back button returns to the landing page.
-4. `#privacy` — renders, back link works, footer unchanged.
-5. `#early-partner` — all five sections, every deck string present, truck
-   arrives at the bays by the last section, no `[cameraRig]` warning in the
-   console.
-6. No console errors on any route; scene survives switching between routes
-   without a context leak.
+1. `npm run typecheck` and `npm run build` clean, with Three.js in the
+   `SceneCanvas` chunk rather than the entry bundle.
+2. `/` — hero, all six sections, floating readouts, camera sweep unchanged.
+3. `/subscribe` — form validates, submit reaches `subscribe()`; back returns.
+4. `/privacy` — renders with its reduced footer; canvas shared with `/subscribe`.
+5. `/early-partner` — five sections, every deck string, own canvas, own title
+   and `lang="hu"`, both restored on leaving.
+6. No console errors and no `[cameraRig:*]` bearing warning on any route.
