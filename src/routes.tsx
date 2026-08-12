@@ -5,10 +5,12 @@ import { MarketingLayout } from "@/layouts/MarketingLayout";
 import { FunnelLayout } from "@/layouts/FunnelLayout";
 import { DocumentLayout } from "@/layouts/DocumentLayout";
 import { DeckLayout } from "@/layouts/DeckLayout";
+import { SandboxLayout } from "@/layouts/SandboxLayout";
 import { LandingPage } from "@/pages/LandingPage";
 import { SubscribePage } from "@/pages/SubscribePage";
 import { PrivacyPage } from "@/pages/PrivacyPage";
 import { EarlyPartnerPage } from "@/pages/EarlyPartnerPage";
+import { SandboxPage } from "@/pages/SandboxPage";
 
 /* Every route the site has, and the chrome each one wears:
 
@@ -18,6 +20,7 @@ import { EarlyPartnerPage } from "@/pages/EarlyPartnerPage";
        FunnelLayout        narrow column, language switch, site footer
        DocumentLayout      reading column, reduced footer
      DeckLayout          its own scene, its own canvas, no site chrome
+     SandboxLayout       a lab: its own scene again, unlinked and noindex
 
    The two scene-owning layouts are siblings, so moving between the site and
    the deck unmounts one canvas and mounts the other. That is the point: they
@@ -55,6 +58,10 @@ export const routes: RouteObject[] = [
       {
         element: <DeckLayout />,
         children: [{ path: "early-partner", element: <EarlyPartnerPage /> }],
+      },
+      {
+        element: <SandboxLayout />,
+        children: [{ path: "sandbox", element: <SandboxPage /> }],
       },
       // Anything else is a mistyped or stale URL; the landing page is the site.
       { path: "*", element: <Navigate to="/" replace /> },
