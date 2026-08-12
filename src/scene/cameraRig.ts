@@ -77,6 +77,11 @@ export function createCameraRig(
   const desiredPosition = new THREE.Vector3();
   const desiredTarget = new THREE.Vector3();
   const currentTarget = new THREE.Vector3();
+  /* The damped pose, kept free of the idle drift. `camera.position` cannot
+     serve as this accumulator: the drift below is written to the camera every
+     frame, so folding the two together feeds each frame's drift back into the
+     next frame's lerp. See `update`. */
+  const dampedPosition = new THREE.Vector3();
 
   /** Local offset -> world, using the truck's current position and heading. */
   function toWorld(local: THREE.Vector3, out: THREE.Vector3) {
@@ -124,6 +129,7 @@ export function createCameraRig(
   function snap() {
     toWorld(localOffset, desiredPosition);
     toWorld(localLook, desiredTarget);
+    dampedPosition.copy(desiredPosition);
     camera.position.copy(desiredPosition);
     currentTarget.copy(desiredTarget);
     camera.lookAt(currentTarget);
@@ -138,6 +144,7 @@ export function createCameraRig(
     toWorld(localLook, desiredTarget);
 
     if (options.reduced) {
+      dampedPosition.copy(desiredPosition);
       camera.position.copy(desiredPosition);
       currentTarget.copy(desiredTarget);
       camera.lookAt(currentTarget);
@@ -146,10 +153,21 @@ export function createCameraRig(
 
     // Frame-rate independent damping: the same weight at 60fps and 144fps.
     const factor = 1 - Math.pow(1 - CAMERA_DAMPING, Math.min(delta, 0.1) * 60);
-    camera.position.lerp(desiredPosition, factor);
+    dampedPosition.lerp(desiredPosition, factor);
     currentTarget.lerp(desiredTarget, factor);
 
-    // Idle drift, so the frame breathes when the visitor stops scrolling.
+    /* Idle drift, so the frame breathes when the visitor stops scrolling.
+     *
+     * Applied on top of the damped pose, never accumulated into it. Writing
+     * these to `camera.position` while that same vector was the lerp's
+     * accumulator meant each frame's offset was carried into the next, where
+     * the lerp reclaimed only `CAMERA_DAMPING` of it before a fresh full offset
+     * went in. It settled at drift/damping — thirteen times the amplitude
+     * authored here — and because `factor` is a function of frame time, an
+     * unsteady frame rate swung that multiplier frame to frame. Cinematic
+     * breathing on a machine holding 60fps; a visible shake on one that is not.
+     */
+    camera.position.copy(dampedPosition);
     camera.position.x += Math.sin(elapsed * 0.21) * 0.03;
     camera.position.y += Math.cos(elapsed * 0.17) * 0.02;
 
