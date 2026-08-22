@@ -61,7 +61,25 @@ const TRAILER_MID = (TRAILER_FRONT + TRAILER_REAR) / 2;
 /** Chassis runs from under the cab to the back of the box, and stops there. */
 const CHASSIS_FRONT = 0.9;
 
-const AXLES = [FRONT_AXLE, TRAILER_REAR + 3.2, TRAILER_REAR + 1.9];
+/**
+ * The tractor's drive axle, at the back of its chassis.
+ *
+ * Without one there is a single steer axle and then nothing until the trailer,
+ * which is why the tractor read as a cab balanced on one wheel. A tractor
+ * carries its load on the drive axle; the fifth wheel sits over it, and that is
+ * the whole reason the coupling is where it is.
+ *
+ * Set well back, from the reference rather than from a rule of thumb: measured
+ * off the photograph the drive wheel sits ~2.1m behind the trailer's nose,
+ * which puts it here and makes the wheelbase 4.3m. Longer than the 3.6-4.0m a
+ * real 4x2 usually runs - but the long gap between the axles, with the fairing
+ * filling it, is the thing that reads as a tractor unit rather than a van, and
+ * the photograph is the brief.
+ */
+const DRIVE_AXLE = -2.5;
+
+/* Steer, drive, and the trailer bogie. */
+const AXLES = [FRONT_AXLE, DRIVE_AXLE, TRAILER_REAR + 3.2, TRAILER_REAR + 1.9];
 
 /**
  * Tall and upright, but with the roof sweeping down into the screen header on
@@ -162,7 +180,32 @@ export function proceduralTruck(palette: ScenePalette): SceneAsset {
       edgeDim,
     );
   }
-  addBox([0.5, 0.34, 1.5], [-0.35, 1.05, 0], fill, edgeDim); // fifth wheel
+  /* The fifth wheel: the platform the trailer rides on, and the plate it
+     pivots about. A single small block here left the trailer looking as though
+     it floated; in the reference this is a visible deck spanning the chassis
+     behind the cab, with the trailer nose overhanging it and the drive axle
+     directly underneath. Sat between the chassis rails (top at 0.94) and the
+     trailer floor (1.0), so it fills that gap. */
+  addBox([2.4, 0.14, 1.9], [-2.2, 1.0, 0], fill, edgeDim); // coupling deck
+  // The ramped lead-in behind the plate, where the kingpin slides on.
+  addBox([0.7, 0.09, 1.5], [-3.3, 0.99, 0], fill, edgeDim);
+  // Cross-members under the deck, so it reads as structure rather than a slab.
+  for (const x of [-1.3, -2.2, -3.0]) {
+    addBox([0.1, 0.12, 1.75], [x, 0.9, 0], fill, edgeDim);
+  }
+
+  /* Mudguards over the drive axle. Arcs rather than panels - the same
+     vocabulary the front wheel arch uses, and the only thing that describes a
+     curve in a model with no shading. */
+  const GUARD_Z = TRACK + 0.2; // just outboard of the tyre, not inside it
+  for (const z of [GUARD_Z, -GUARD_Z]) {
+    group.add(
+      lineSegments(
+        arcSegments(DRIVE_AXLE, WHEEL_RADIUS, 0.8, 0.12, Math.PI - 0.12, 12, z),
+        edgeDim,
+      ),
+    );
+  }
 
   /** Rounded panel standing on the front face, facing +X. */
   const facePanel = (
@@ -302,8 +345,12 @@ export function proceduralTruck(palette: ScenePalette): SceneAsset {
       ),
     );
 
-    // Side skirt below the door.
-    addBox([1.4, 0.5, 0.06], [-0.1, 0.78, sign * (HALF_W - 0.02)], fill, edgeDim);
+    /* Side fairing, running the length of the gap the drive axle opened up.
+       In the reference this is one long panel from behind the steer wheel to
+       the drive wheel, and it is most of what the flank of a tractor unit
+       actually is. At 1.4m it stopped just past the door and left the chassis
+       bare over an axle gap more than twice as long. */
+    addBox([3.0, 0.56, 0.06], [-0.6, 0.76, sign * (HALF_W - 0.02)], fill, edgeDim);
   }
 
   // Mirrors: slim housings hung from the top of the A-pillar.
