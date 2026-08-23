@@ -2,17 +2,19 @@ import { useEffect, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { SandboxScene } from "@/scene/sandbox/SandboxScene";
 import { useScrollStore } from "@/motion/ScrollProvider";
+import { SCENES, sceneAt } from "@/scene/sandbox/scenes";
 
 const TITLE = "atlasz — sandbox";
 
-/* Where the scene's camera framings are authored, mirrored from the world's
-   `buildFramings` so the readout can name the shot you are looking at. */
-const FRAMING_AT = [0, 0.24, 0.48, 0.54, 0.6, 0.7, 0.88, 1];
-
 /**
- * Scroll position and the nearest authored framing. A lab wants a readout —
- * "it breaks around 0.7" is a bug report; "it breaks somewhere in the middle"
- * is not.
+ * Which scene you are in, how far through it, and the raw scroll.
+ *
+ * Read from the same table the world builds its framings from, rather than a
+ * copy of the numbers kept in step by hand. The earlier version of this mirrored
+ * the framing positions and went stale every single time the timing changed.
+ *
+ * A lab wants a readout: "it breaks early in the uplink" is a bug report,
+ * "it breaks somewhere in the middle" is not.
  */
 function Readout() {
   const store = useScrollStore();
@@ -20,17 +22,36 @@ function Readout() {
 
   useEffect(() => store.subscribe(setProgress), [store]);
 
-  const nearest = FRAMING_AT.reduce((best, at) =>
-    Math.abs(at - progress) < Math.abs(best - progress) ? at : best,
-  );
+  const scene = sceneAt(progress);
+  const pad = (n: number) => String(n).padStart(2, "0");
 
   return (
     <div className="pointer-events-none fixed bottom-6 left-6 z-20 font-mono text-[0.7rem] leading-relaxed tracking-[0.08em] text-muted/70">
+      <div className="text-fg">
+        scene {pad(scene.number)} / {pad(scene.count)} · {scene.name}
+      </div>
+      <div className="mt-1">
+        through <span className="text-fg">{scene.local.toFixed(2)}</span>
+      </div>
       <div>
         scroll <span className="text-fg">{progress.toFixed(3)}</span>
       </div>
-      <div>
-        nearest framing <span className="text-fg">{nearest.toFixed(2)}</span>
+      {/* A tick per scene, filling as you pass through it. */}
+      <div className="mt-2 flex gap-1">
+        {SCENES.map((s, i) => (
+          <span
+            key={s.name}
+            className="h-px w-8 overflow-hidden bg-fg/15"
+            aria-hidden="true"
+          >
+            <span
+              className="block h-full origin-left bg-fg/70"
+              style={{
+                transform: `scaleX(${i < scene.index ? 1 : i === scene.index ? scene.local : 0})`,
+              }}
+            />
+          </span>
+        ))}
       </div>
     </div>
   );

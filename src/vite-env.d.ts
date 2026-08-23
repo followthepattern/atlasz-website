@@ -7,3 +7,10 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+/* Vite serves arbitrary files as URLs with the `?url` suffix, but only knows
+   the types of the extensions it ships with. FBX is not one of them. */
+declare module "*.fbx?url" {
+  const src: string;
+  export default src;
+}

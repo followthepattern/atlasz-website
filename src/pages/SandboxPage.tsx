@@ -1,61 +1,38 @@
-/* The scroll positions the camera framings are authored at, mirrored from the
-   scene's `buildFramings`. Kept here as labels so that a section of the page
-   lines up with a shot, and a change can be reported as "the crossing broke"
-   rather than as a scroll fraction.
+import { SandboxHero } from "@/components/sandbox/SandboxHero";
 
-   These are a readout of the scene, not an input to it — nothing here drives
-   the camera. If the framings move, these numbers go stale and say so. */
-const FRAMINGS = [
-  { at: 0, bearing: "+87°", note: "hero — square to the flank" },
-  { at: 0.24, bearing: "+30°", note: "pulled back and up" },
-  { at: 0.48, bearing: "+13°", note: "swinging toward the nose" },
-  { at: 0.54, bearing: "+13°", note: "held — bearing locked, closing in" },
-  { at: 0.6, bearing: "+13°", note: "held — end of the pause" },
-  { at: 0.7, bearing: "-11°", note: "the crossing — past the nose, far side" },
-  { at: 0.88, bearing: "-33°", note: "the facility comes into frame" },
-  { at: 1, bearing: "-50°", note: "arrived, opposite the yard" },
-];
-
-/**
- * The sandbox: the site's scenario with nothing on top of it.
+/* The page is the hero, and after that scroll length and nothing else.
  *
- * The page is deliberately almost empty. Its height exists to give the drive
- * room to play out, and its only content is a marker per authored framing, so
- * you can tell which shot you are looking at while you change one.
- */
+ * An earlier version labelled every camera framing down the page. That was a
+ * second copy of numbers the scene already owns, and it went stale the first
+ * time the framings changed — which is the argument against keeping it. Where
+ * the camera is now comes from the live readout in the layout, which reads the
+ * scroll rather than restating it. */
+/* Longer than the arc strictly needs. Scroll progress is normalised against
+   document height, so adding sections does not move a single framing — every
+   beat simply gets more physical scrolling to happen over.
+ *
+ * At 22 sections the open stretch after the satellites is ~3 screens and the
+ * satellite hold is ~4, which is what makes the scene feel like a journey
+ * rather than a sequence of positions.
+ *
+ * This number is paired with TRUCK_FROM in the world: stretching the page
+ * without also stretching the drive would leave the vehicle covering the same
+ * road more slowly, which reads as a crawl rather than as a longer road. */
+const BEATS = 58;
+
 export function SandboxPage() {
   return (
     <main className="relative">
-      <section className="mx-auto flex min-h-screen w-full max-w-5xl flex-col justify-center px-6">
-        <span className="font-mono text-xs uppercase tracking-[0.18em] text-muted">
-          sandbox
-        </span>
-        <h1 className="mt-3 max-w-xl text-4xl font-semibold tracking-tight text-fg">
-          The same road, somewhere it can be broken.
-        </h1>
-        <p className="mt-4 max-w-lg text-base leading-relaxed text-muted">
-          A copy of the marketing scene, on its own canvas behind its own route.
-          Nothing here is linked and nothing here ships. Change the world in{" "}
-          <code className="font-mono text-[0.85em] text-fg">
-            src/scene/sandbox/world.ts
-          </code>{" "}
-          and the landing page cannot notice.
-        </p>
-      </section>
+      {/* The site's own opening frame, over the sandbox scene rather than the
+          site's. Real markup rather than anything drawn into the canvas, so the
+          first screen still says what this is on a machine with no WebGL. The
+          placeholder heading that used to stand here listed the seven scenes;
+          the Readout in the layout already reports which one you are in, from
+          the same table the world builds its framings from. */}
+      <SandboxHero />
 
-      {FRAMINGS.map((shot, i) => (
-        <section
-          key={shot.at}
-          className="mx-auto flex min-h-screen w-full max-w-5xl items-center px-6"
-        >
-          <div className="font-mono text-xs leading-relaxed tracking-[0.08em] text-muted/60">
-            <div className="text-fg">
-              {String(i + 1).padStart(2, "0")} · at {shot.at.toFixed(2)} ·{" "}
-              {shot.bearing}
-            </div>
-            <div className="mt-1">{shot.note}</div>
-          </div>
-        </section>
+      {Array.from({ length: BEATS }, (_, i) => (
+        <section key={i} aria-hidden="true" className="min-h-screen" />
       ))}
     </main>
   );

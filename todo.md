@@ -1,0 +1,1 @@
+take turns approach: one section copy, one section animation.
