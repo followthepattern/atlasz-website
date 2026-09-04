@@ -1,7 +1,11 @@
-// Backend base URL. Defaults to the production atlasz backend; override via
-// VITE_API_BASE_URL (e.g. set it empty for local dev so requests hit the Vite
-// proxy / same origin).
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "https://app.atlasz.eu";
+// Leads go to STRV.AI, which owns the CRM they are worked in: a lead lands in
+// app.lead there and is promoted into a CRM contact from the connector. Override
+// via VITE_API_BASE_URL (set it empty for local dev so requests hit the Vite proxy).
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "https://app.strv.ai";
+
+// Shared secret for the public ingest endpoint. It ships in the bundle, so it is
+// not a real secret: it raises the cost of scripted submissions, nothing more.
+const LEAD_SECRET = import.meta.env.VITE_LEAD_INGEST_SECRET ?? "";
 
 export interface SubscribePayload {
   email: string;
@@ -15,9 +19,12 @@ export interface SubscribePayload {
 }
 
 export async function subscribe(payload: SubscribePayload): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}/api/subscribe`, {
+  const res = await fetch(`${API_BASE_URL}/subscribe`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(LEAD_SECRET ? { "X-Lead-Secret": LEAD_SECRET } : {}),
+    },
     body: JSON.stringify(payload),
   });
   if (!res.ok) {
