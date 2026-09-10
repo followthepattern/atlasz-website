@@ -3,10 +3,6 @@
 // via VITE_API_BASE_URL (set it empty for local dev so requests hit the Vite proxy).
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "https://app.strv.ai";
 
-// Shared secret for the public ingest endpoint. It ships in the bundle, so it is
-// not a real secret: it raises the cost of scripted submissions, nothing more.
-const LEAD_SECRET = import.meta.env.VITE_LEAD_INGEST_SECRET ?? "";
-
 export interface SubscribePayload {
   email: string;
   name: string;
@@ -23,7 +19,6 @@ export async function subscribe(payload: SubscribePayload): Promise<void> {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...(LEAD_SECRET ? { "X-Lead-Secret": LEAD_SECRET } : {}),
     },
     body: JSON.stringify(payload),
   });
