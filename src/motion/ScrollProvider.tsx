@@ -23,16 +23,23 @@ export type ScrollStore = {
   get(): number;
   subscribe(fn: Subscriber): () => void;
   refresh(): void;
+  scrollTo(top: number, duration?: number, constantSpeed?: boolean): void;
 };
 
 const ScrollContext = createContext<ScrollStore | null>(null);
 
-function createStore(): ScrollStore & { publish(p: number): void } {
+function createStore(): ScrollStore & { publish(p: number): void; setScrollDriver(driver: ((top: number, duration: number, constantSpeed: boolean) => void) | null): void } {
+  let scrollDriver: ((top: number, duration: number, constantSpeed: boolean) => void) | null = null;
   let progress = 0;
   const subscribers = new Set<Subscriber>();
 
   return {
     get: () => progress,
+    setScrollDriver(driver) { scrollDriver = driver; },
+    scrollTo(top, duration = .65, constantSpeed = false) {
+      if (scrollDriver) scrollDriver(top, duration, constantSpeed);
+      else window.scrollTo({ top, behavior: 'instant' });
+    },
     subscribe(fn) {
       subscribers.add(fn);
       fn(progress);
@@ -83,6 +90,22 @@ export function ScrollProvider({ children }: { children: ReactNode }) {
       touchMultiplier: 1.6,
     });
 
+    let playing = false;
+    store.setScrollDriver((top, duration, constantSpeed) => {
+      playing = constantSpeed && duration > 0;
+      lenis.scrollTo(top, {
+        duration, immediate: duration === 0,
+        easing: (t) => constantSpeed ? t : t * t * (3 - 2 * t),
+        onComplete: () => { playing = false; },
+      });
+    });
+    const takeOver = () => {
+      if (!playing) return;
+      playing = false;
+      lenis.scrollTo(window.scrollY, { immediate: true });
+    };
+    window.addEventListener('wheel', takeOver, { capture: true, passive: true });
+    window.addEventListener('touchstart', takeOver, { capture: true, passive: true });
     document.documentElement.classList.add("lenis");
 
     const onLenisScroll = () => {
@@ -102,6 +125,9 @@ export function ScrollProvider({ children }: { children: ReactNode }) {
     return () => {
       gsap.ticker.remove(raf);
       gsap.ticker.lagSmoothing(500, 33);
+      window.removeEventListener('wheel', takeOver, true);
+      window.removeEventListener('touchstart', takeOver, true);
+      store.setScrollDriver(null);
       lenis.destroy();
       document.documentElement.classList.remove("lenis");
     };

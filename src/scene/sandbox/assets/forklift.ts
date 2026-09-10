@@ -24,7 +24,7 @@ import type { ScenePalette } from "../../palette";
  * ended up 0.35m outside the trailer. It loaded the air behind the truck. At
  * -0.5 the body still stops 0.4m clear of the bodywork while the forks reach a
  * metre through the opening, which is how this is actually done. */
-const WAITING_AT = -8.2;
+const WAITING_AT = -48;
 const DOCKED_AT = -0.5;
 
 /* Fork travel: ground clearance up to the trailer floor, which sits at y=1.0.
@@ -40,11 +40,11 @@ const smooth = (t: number) => t * t * (3 - 2 * t);
 const clamp01 = (t: number) => Math.min(1, Math.max(0, t));
 
 /** Portions of the scene: drive in, raise, push in, withdraw, drive out. */
-const DRIVE_IN = 0.22;
-const RAISE = 0.4;
-const PUSH = 0.55;
-const WITHDRAW = 0.68;
-const DRIVE_OUT = 0.9;
+const DRIVE_IN = 0.32;
+const RAISE = 0.46;
+const PUSH = 0.60;
+const WITHDRAW = 0.70;
+const DRIVE_OUT = 1;
 
 export type Forklift = {
   object3D: THREE.Object3D;
@@ -135,24 +135,19 @@ export function proceduralForklift(palette: ScenePalette): Forklift {
   box(load, [1.15, 0.12, 0.95], [1.15, 0.15, 0], fill, edgeDim); // pallet
   box(load, [0.95, 0.75, 0.8], [1.15, 0.59, 0], accent, edge); // crate
 
+  chassis.position.x = WAITING_AT;
+  carriage.position.y = FORK_LOW;
+
   return {
     object3D: group,
 
     setStage(t) {
       const p = clamp01(t);
 
-      /* Off stage at either end, pallet included. This asset stands still, so
-         a load left visible after the scene would sit in mid-air on an empty
-         verge while the truck that supposedly contains it drives away. */
-      if (p <= 0 || p >= 1) {
-        chassis.visible = false;
-        load.visible = false;
-        return;
-      }
+      // The machine always exists: it waits well beyond the left edge,
+      // drives into view, loads, then reverses all the way back out.
       chassis.visible = true;
-      // On the forks from the moment it appears — it arrives carrying the
-      // thing it came to deliver, which is the only reason it is here.
-      load.visible = true;
+      load.visible = p < 1;
 
       // Along its approach axis: in, hold while it works, out again.
       let along: number;

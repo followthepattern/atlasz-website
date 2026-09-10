@@ -18,7 +18,7 @@ import type { ScenePalette } from "../../palette";
  * to a hard square. The whole ask here is to fly through the deck, so the
  * cheaper option is the one that breaks precisely when it matters.
  *
- * The cost of that choice is one draw call per puff, and there are 220 of them.
+ * The cost of that choice is one draw call per puff, and there are 260 of them.
  * It is paid only while the deck is on screen — `setStrength` drops the group's
  * visibility to false everywhere else, and a hidden group is not traversed.
  */
@@ -30,20 +30,11 @@ import type { ScenePalette } from "../../palette";
 export const CLOUD_BASE = 185;
 export const CLOUD_TOP = 245;
 
-/* How far the deck spreads horizontally, and how many puffs fill it.
- *
- * Sized against what is actually in frame rather than against the world. At the
- * apex the deck sits 117m below the camera, where the visible window is only
- * ~104m by 58m — so at the old 90 puffs over +-340m, about eight were in or
- * overlapping the frame, and each was 55-185 units across. One or two of those
- * cover the whole picture, which is why the deck read as a wash rather than as
- * cloud: there was plenty of it and almost none of it legible.
- *
- * More, and smaller. Roughly eighteen now contribute to the frame at any moment
- * and each is a fraction of its width, so the layer has edges and gaps in it. */
+/* A modestly denser deck, grouped into small banks with open gaps. Smaller
+ * puffs keep the satellite climb legible instead of filling it with fog. */
 const SPREAD = 300;
 
-const PUFFS = 220;
+const PUFFS = 260;
 
 /** Deterministic, so the deck is the same on every reload and every machine. */
 function mulberry32(seed: number) {
@@ -102,45 +93,47 @@ export function proceduralClouds(palette: ScenePalette): Clouds {
 
   const texture = puffTexture();
   /* One material for every puff, so the fade is a single property write rather
-     than ninety. depthWrite off because the puffs overlap constantly and each
+     than 260. depthWrite off because the puffs overlap constantly and each
      one writing depth would punch holes in the ones behind it. */
   const material = new THREE.SpriteMaterial({
     map: texture,
-    color: palette.glass,
+    color: palette.line.clone().lerp(palette.fog, 0.45),
     transparent: true,
     opacity: 0,
     depthWrite: false,
     fog: true,
   });
 
-  const drift: { sprite: THREE.Sprite; phase: number; rate: number }[] = [];
+  const drift: { sprite: THREE.Sprite; x: number; z: number; phase: number; rate: number }[] = [];
+  const clusters = Array.from({ length: 26 }, () => ({
+    x: (random() - 0.5) * SPREAD * 2,
+    z: (random() - 0.5) * SPREAD * 2,
+  }));
 
   for (let i = 0; i < PUFFS; i += 1) {
     const sprite = new THREE.Sprite(material);
-    const size = 42 + random() * 98;
+    const size = 36 + random() * 72;
+    const cluster = clusters[Math.floor(i / 10)];
     sprite.scale.set(size, size * (0.5 + random() * 0.3), 1);
     sprite.position.set(
-      (random() - 0.5) * SPREAD * 2,
+      cluster.x + (random() - 0.5) * 68,
       CLOUD_BASE + random() * (CLOUD_TOP - CLOUD_BASE),
-      (random() - 0.5) * SPREAD * 2,
+      cluster.z + (random() - 0.5) * 54,
     );
     group.add(sprite);
-    drift.push({ sprite, phase: random() * Math.PI * 2, rate: 0.4 + random() * 0.5 });
+    drift.push({ sprite, x: sprite.position.x, z: sprite.position.z, phase: random() * Math.PI * 2, rate: 0.4 + random() * 0.5 });
   }
 
   let strength = 0;
+  group.visible = false;
 
   return {
     object3D: group,
 
     setStrength(value) {
       strength = Math.min(1, Math.max(0, value));
-      /* Lower per puff than before, because there are two and a half times as
-         many and they overlap far more. What has to stay constant is how much
-         of the truck survives the deck — that is the whole point of flying
-         through it rather than over — and that is a function of the stack, not
-         of any one billboard. */
-      material.opacity = strength * 0.22;
+      // Restrained opacity lets the truck and terrain survive stacked puffs.
+      material.opacity = strength * 0.2;
       group.visible = strength > 0.001;
     },
 
@@ -149,13 +142,15 @@ export function proceduralClouds(palette: ScenePalette): Clouds {
       // A slow sideways crawl, so the deck is not a frozen photograph while the
       // camera moves through it. Per-puff rates keep it from reading as one
       // sheet sliding.
-      for (const { sprite, phase, rate } of drift) {
-        sprite.position.x += Math.sin(elapsed * 0.05 * rate + phase) * 0.012;
+      for (const { sprite, x, z, phase, rate } of drift) {
+        // Absolute time keeps motion bounded and independent of frame rate.
+        sprite.position.x = x + (Math.sin(elapsed * 0.05 * rate + phase) - Math.sin(phase)) * 9;
+        sprite.position.z = z + (Math.cos(elapsed * 0.035 * rate + phase) - Math.cos(phase)) * 4;
       }
     },
 
     setPalette(next) {
-      material.color.copy(next.glass);
+      material.color.copy(next.line).lerp(next.fog, 0.45);
     },
 
     dispose() {

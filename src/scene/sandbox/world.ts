@@ -4,7 +4,7 @@ import { proceduralTruck } from "./assets/truck";
 import { proceduralWarehouse } from "../assets/warehouse";
 import { proceduralTrees } from "../assets/trees";
 import type { SceneAsset } from "../assets/types";
-import { ROUTE, headingAt, placeOnRoute, treePlacements, type Follow } from "../road";
+import { ROUTE, headingAt, placeOnRoute, treePlacements, type Follow } from "./road";
 import { screenSize, type ScreenSize } from "../viewport";
 import { createCameraRig, type Framing } from "../cameraRig";
 import { proceduralClouds, CLOUD_BASE, CLOUD_TOP } from "./assets/clouds";
@@ -13,7 +13,11 @@ import { proceduralStation } from "./assets/station";
 import { proceduralCarriageway } from "./assets/carriageway";
 import { proceduralGround } from "./assets/ground";
 import { proceduralForklift } from "./assets/forklift";
+import { proceduralFactory } from "./assets/factory";
 import { proceduralBridge } from "./assets/bridge";
+import { createDriver } from "./driver";
+import { fuelStopPose } from "./fuelStop";
+import { TRUCK_FROM, TRUCK_TO, BRIDGE_SCENE, BRIDGE_FADE, TRAILER_REAR_BACK, FUEL_SCENE, STOPPED_FROM, routeAt } from "./journey";
 import { within, SCENE_START, SCENE_SPAN } from "./scenes";
 import type { SceneContext, SceneInstance, SceneFactory } from "../types";
 
@@ -34,108 +38,8 @@ import type { SceneContext, SceneInstance, SceneFactory } from "../types";
  * its floating readouts. The lab renders no overlay, so it had no subscribers —
  * dead coupling to a page concern. */
 
-/* Where the vehicle sits on the route at scroll 0 and scroll 1. It runs the
-   whole page and arrives at the bays on the last beat — the climb happens over
-   a drive that never stops, and the page ends on the arrival.
- *
- * The start is as far back as the road goes, for a reason. Every time the page
- * has grown, leaving this alone would have covered the same stretch of tarmac
- * over more scrolling — the truck would not have travelled further, it would
- * have crawled. Extending the run instead holds its speed per screen and makes
- * the road itself longer, which is what actually reads as a longer journey.
- *
- * The end stays put: 0.612 is where the facility stands and the arrival is the
- * last beat of the page, so the extra distance comes out of the start. At 30
- * sections that start reaches 0.02 and there is no more road — holding the old
- * pace exactly would need to begin at -0.034. So the vehicle now runs about 8%
- * slower per screen, which is the shared ROUTE running out rather than a
- * choice. Getting it back would mean extending the curve in road.ts, which the
- * site and the deck also drive on, or giving the sandbox a route of its own. */
-const TRUCK_FROM = 0.02;
-const TRUCK_TO = 0.612;
-
-/* The drive, written as a speed profile rather than as a position curve.
- *
- * Every earlier version mapped scroll to route position linearly, which is
- * exactly right for a vehicle that never stops and useless for one that does.
- * Expressing the stop as position keyframes makes it easy to place and very
- * hard to shape: the deceleration, the dwell and the pull-away each have to be
- * eased by hand, and every mistake shows up as the truck twitching.
- *
- * A speed profile inverts that. Speed is 1 while running and 0 while standing,
- * with a smooth ramp either side, and integrating it gives the position curve
- * for free. The integral is normalised, so the vehicle still arrives at the
- * bays on the final beat no matter how long the stop is made — lengthening the
- * dwell slows the rest of the drive rather than overshooting the yard. */
-/* The vehicle is parked for the first two scenes — the camera's opening turn
-   and the whole of the load — and only pulls away once the road scene starts.
-   Two stops in one drive, then, and the profile below is what makes that a
-   description rather than a special case. */
-const ROAD_SCENE = 2;
-
-/* The bridge, at the middle of its own scene — derived from the drive, like the
-   station and the office, so retiming the page moves the river with the truck
-   rather than stranding a span in a field. */
-const BRIDGE_SCENE = 3;
-
-/* How far off the bridge has to be before it is gone, measured from the
-   vehicle. The scene is only about 35m of travel, so without this a landmark
-   would sit in the distance across most of the page — a 124m truss did exactly
-   that, which is what made it feel like it belonged to every scene at once.
-   Fully there within 30m, gone by 85: it comes into view as an approach and
-   leaves as a departure. */
-const BRIDGE_FADE = [30, 85] as const;
-
-/** How far behind the vehicle's origin its rear doors are, in metres. */
-const TRAILER_REAR_BACK = 17.4;
-const ROLLING_FROM = within(ROAD_SCENE, 0.04);
-const ROLLING_TO = within(ROAD_SCENE, 0.2);
-
-const FUEL_SCENE = 5;
-const DECEL_FROM = within(FUEL_SCENE, 0.1);
-const STOPPED_FROM = within(FUEL_SCENE, 0.3);
-const STOPPED_TO = within(FUEL_SCENE, 0.76);
-const ACCEL_TO = within(FUEL_SCENE, 0.94);
-
+// Route geometry is isolated in sandbox/road.ts; scene timing stays unchanged.
 const smoothstep = (t: number) => t * t * (3 - 2 * t);
-
-function speedAt(p: number) {
-  // Standing while it is loaded, then pulling away.
-  if (p <= ROLLING_FROM) return 0;
-  if (p < ROLLING_TO) {
-    return smoothstep((p - ROLLING_FROM) / (ROLLING_TO - ROLLING_FROM));
-  }
-  // Running, until the fuel stop takes it down and lets it go again.
-  if (p <= DECEL_FROM || p >= ACCEL_TO) return 1;
-  if (p >= STOPPED_FROM && p <= STOPPED_TO) return 0;
-  if (p < STOPPED_FROM) {
-    return 1 - smoothstep((p - DECEL_FROM) / (STOPPED_FROM - DECEL_FROM));
-  }
-  return smoothstep((p - STOPPED_TO) / (ACCEL_TO - STOPPED_TO));
-}
-
-/* Distance covered by scroll position, as a normalised lookup. Built once —
-   integrating per frame would be silly, and the profile never changes. */
-const DRIVE_SAMPLES = 512;
-const DRIVE_CURVE = (() => {
-  const covered = new Float32Array(DRIVE_SAMPLES + 1);
-  let total = 0;
-  for (let i = 1; i <= DRIVE_SAMPLES; i += 1) {
-    total += speedAt((i - 0.5) / DRIVE_SAMPLES) / DRIVE_SAMPLES;
-    covered[i] = total;
-  }
-  for (let i = 0; i <= DRIVE_SAMPLES; i += 1) covered[i] /= total;
-  return covered;
-})();
-
-/** Where on the route the vehicle is, at a scroll position. */
-function routeAt(progress: number) {
-  const p = Math.min(1, Math.max(0, progress)) * DRIVE_SAMPLES;
-  const i = Math.min(DRIVE_SAMPLES - 1, Math.floor(p));
-  const f = p - i;
-  const covered = DRIVE_CURVE[i] + (DRIVE_CURVE[i + 1] - DRIVE_CURVE[i]) * f;
-  return TRUCK_FROM + (TRUCK_TO - TRUCK_FROM) * covered;
-}
 
 /* Where the station stands, derived from where the vehicle actually stops
    rather than typed in beside it. Retune the profile above and the forecourt
@@ -146,6 +50,7 @@ const STATION_AT = routeAt(STOPPED_FROM);
    scene inherits a shallow bearing from the uplink, so the camera is nearly
    in front of the nose and the frame is only ~20m wide at the vehicle. Pumps
    at 17m were simply outside it. */
+
 const STATION_OFFSET = 6; // pumps land ~9.4m off the centreline
 
 /* Two identical units already standing at the facility, parked side by side
@@ -247,9 +152,7 @@ const offsetBy =
  *   0.70  +8°
  * scene 3 - the fuel stop        (the vehicle stops; see the speed profile)
  *          +7°  +6°  +5°  +4°   <- slowing, standing, pulling away
- * scene 4 - the office
- *          +4°  +3°  +2°  +1°   <- alongside the glass, traffic on the beam
- * scene 5 - the approach
+ * scene 4 - the approach
  *          -9°  -29°  -50°      <- the crossing, still turning, and it arrives
  *
  * One continuous rotation from +87° to -44°, never reversed. It stays on the
@@ -266,6 +169,10 @@ function buildFramings(
 ): Framing[] {
   const trailer = anchors.trailer ?? new THREE.Vector3(-7.4, 2.5, 0);
   const from = offsetBy(distance);
+  const orbit = (anchor: THREE.Vector3, radius: number, height: number, degrees: number) => {
+    const angle = THREE.MathUtils.degToRad(degrees);
+    return from(anchor, radius * Math.cos(angle), height, radius * Math.sin(angle));
+  };
 
   return [
     /* ---- The opening. The camera turns; the vehicle does not move. ----
@@ -501,42 +408,29 @@ function buildFramings(
       lookOffset: from(trailer, 6, 1, 0),
     },
 
-    /* ---- The approach. The rotation runs all the way through it. ----
-     *
-     * These four are written as bearing-and-radius rather than as raw offsets,
-     * because the obvious way to move a framing to the other side of the truck
-     * — hold x, set z = x * tan(bearing) — silently pulls the camera in. It
-     * preserves the angle and shortens the radius, which is how the arrival
-     * ended up 36m out when it had been 49m, and much too close.
-     *
-     * So: x = r * cos(bearing), z = r * sin(bearing), with r written down. The
-     * radius opens from 48m to 54m across the scene, so the camera drifts out
-     * as it comes round rather than closing in on a vehicle that is itself
-     * slowing to a stop.
-     *
-     * This scene used to park the camera at +8° and then swing 52° on the last
-     * beat. That put the page's one change of viewpoint into a tenth of the
-     * scroll and left the eight screens before it static — a held camera over a
-     * vehicle driving in a straight line, which is a very long time to look at
-     * nothing changing.
-     *
-     * So the rotation is continuous instead: +8° to -8° to -25° to -44°, three
-     * near-equal steps of roughly 17° each. It crosses the nose early, about a
-     * third of the way in, and keeps turning to the arrival — the camera comes
-     * round the vehicle as the vehicle comes into the yard.
-     *
-     * Still the room to build into. The scene is 0.30 of the page, 8.7 screens,
-     * and nothing is staged in it — what changed is that the camera moves
-     * through it rather than waiting at one bearing. Anything added here gets
-     * a slow pan rather than a locked frame. */
+    // Quiet road travel: a gentle tracking shot with no stop or new activity.
     {
       at: within(6, 0.35),
-      offset: from(trailer, 49.51, 19, -6.96), // -8° at 50m, the crossing
+      offset: orbit(trailer, 52, 15, -5),
+      lookOffset: from(trailer, 3, 0.5, 0),
+    },
+    {
+      at: within(6, 1),
+      offset: orbit(trailer, 52, 18, -22),
+      lookOffset: trailer.clone(),
+    },
+
+    // Continue the same orbit into the approach: +4° at the station exit,
+    // -22° at the end of the open road, then -44° on arrival. Sin/cos offsets
+    // preserve the radius as the camera crosses the nose and comes around.
+    {
+      at: within(7, 0.35),
+      offset: orbit(trailer, 52, 19, -30),
       lookOffset: trailer.clone(),
     },
     {
-      at: within(6, 0.7),
-      offset: from(trailer, 47.13, 20, -21.98), // -25° at 52m, coming round
+      at: within(7, 0.7),
+      offset: orbit(trailer, 53, 20, -38),
       lookOffset: trailer.clone(),
     },
     /* Arrived. The vehicle reaches the bays exactly here — driveTo runs it to
@@ -547,8 +441,8 @@ function buildFramings(
      * The aim leaves the trailer for the first time since the crossing, to take
      * in the buildings the truck has arrived at. */
     {
-      at: within(6, 1),
-      offset: from(trailer, 38.84, 21, -37.51), // -44° at 54m, arrived
+      at: within(7, 1),
+      offset: orbit(trailer, 54, 21, -44),
       lookOffset: from(trailer, 4, 0, 10),
     },
   ];
@@ -582,7 +476,10 @@ export const createSandboxScene: SceneFactory = ({
   const carriageway = proceduralCarriageway(palette);
   scene.add(carriageway.object3D);
 
-  const ground = proceduralGround(palette);
+  const bridgeRoute = routeAt(within(BRIDGE_SCENE, 0.5));
+  const riverPosition = ROUTE.getPointAt(bridgeRoute);
+  const riverHeading = headingAt(bridgeRoute);
+  const ground = proceduralGround(palette, { position: riverPosition, heading: riverHeading });
   scene.add(ground.object3D);
 
   const truck = proceduralTruck(palette);
@@ -597,10 +494,21 @@ export const createSandboxScene: SceneFactory = ({
     return unit;
   });
 
+  const factory = proceduralFactory(palette);
+  placeOnRoute(factory.object3D, TRUCK_FROM);
+  factory.object3D.position.x -= 11;
+  scene.add(factory.object3D);
+
   const trees = proceduralTrees(
     palette,
     // Leave the frontage clear where the facility meets the road.
-    treePlacements({ clearings: [[WAREHOUSE_AT, 0.055]] }),
+    [
+      ...treePlacements({ from: 0.02, to: 0.94, clearings: [[WAREHOUSE_AT, 0.025], [STATION_AT, 0.025]] }),
+      ...treePlacements({ from: 0.035, to: 0.94, verge: 36, spread: 10, seed: 0x71ee, clearings: [[WAREHOUSE_AT, 0.03], [STATION_AT, 0.028]] }),
+    ].filter(({ position }) =>
+      !(position.x < ROUTE.getPointAt(TRUCK_FROM).x - 18 && position.x > ROUTE.getPointAt(TRUCK_FROM).x - 70 && position.z < 2 && position.z > -30) &&
+      Math.abs(Math.cos(riverHeading) * (position.x - riverPosition.x) - Math.sin(riverHeading) * (position.z - riverPosition.z)) > 25,
+    ),
   );
   scene.add(trees.object3D);
 
@@ -609,6 +517,11 @@ export const createSandboxScene: SceneFactory = ({
   const station = proceduralStation(palette);
   placeOnRoute(station.object3D, STATION_AT, STATION_OFFSET);
   scene.add(station.object3D);
+  const driver = createDriver(palette);
+  const driverFrame = new THREE.Group();
+  placeOnRoute(driverFrame, STATION_AT);
+  driverFrame.add(driver.object3D);
+  scene.add(driverFrame);
 
   /* The loader, parked where the vehicle starts. Its own +x points at the
      trailer's flank, which is a quarter turn off the route's — hence the extra
@@ -666,6 +579,12 @@ export const createSandboxScene: SceneFactory = ({
     // is pure forward motion and the truck is already square with the pair it
     // parks between.
     placeOnRoute(truck.object3D, t, 0);
+    // Pitch the rigid vehicle to the average road grade across its wheelbase.
+    const back = ROUTE.getPointAt(Math.max(0, t - 12 / ROUTE.getLength()));
+    const front = ROUTE.getPointAt(Math.min(1, t + 3 / ROUTE.getLength()));
+    truck.object3D.rotation.order = 'YXZ';
+    truck.object3D.rotation.z = Math.atan2(front.y - back.y, Math.hypot(front.x - back.x, front.z - back.z));
+    truck.object3D.position.y = back.y + (front.y - back.y) * 0.8;
     follow.position.copy(truck.object3D.position);
     follow.heading = truck.object3D.rotation.y;
   }
@@ -684,8 +603,12 @@ export const createSandboxScene: SceneFactory = ({
   rig.setProgress(0);
   rig.snap();
 
-  const assets: SceneAsset[] = [truck, ...parked, warehouse, trees];
+  const assets: SceneAsset[] = [truck, ...parked, warehouse, trees, factory];
   let progress = 0;
+  let lastRoute = routeAt(0);
+  const closePosition = new THREE.Vector3();
+  const closeTarget = new THREE.Vector3();
+  const cameraTarget = new THREE.Vector3();
 
   return {
     scene,
@@ -696,16 +619,36 @@ export const createSandboxScene: SceneFactory = ({
     },
     update(elapsed, delta) {
       driveTo(progress);
-      // Only the moving unit is animated. The parked pair keep their wheels
-      // still, which is what tells them apart from the one under way.
-      /* Scale the delta the vehicle sees by how fast it is actually going.
-         The truck spins its wheels off delta, so a parked truck with its wheels
-         still turning is the one thing that would give the whole stop away —
-         and the same scaling settles the body's idle bounce as it comes to
-         rest, for free. */
-      truck.update?.(elapsed, delta * speedAt(progress), progress);
+      // Distance-driven wheels stop with scrolling, reverse when rewinding,
+      // and stay still throughout both loading and the driver walk.
+      const route = routeAt(progress);
+      truck.update?.(0, (route - lastRoute) * ROUTE.getLength() / (0.56 * 2.4), progress);
+      // The asset's idle animation resets y; retain the road grade instead.
+      truck.object3D.position.y = follow.position.y;
+      lastRoute = route;
+      const fuel = (progress - SCENE_START[FUEL_SCENE]) / SCENE_SPAN[FUEL_SCENE];
+      const pose = fuelStopPose(fuel);
+      truck.setDriverDoor(pose.door);
+      driver.update(pose, reduced);
       rig.update(elapsed, delta);
-
+      // A driver-side insert during the stop. The original journey rig keeps
+      // running underneath, so the satellite descent and depot sweep retain
+      // their authored framings on either side of this close view.
+      const closeWeight = smoothstep(ramp(fuel, [0.18, 0.30])) * (1 - smoothstep(ramp(fuel, [0.76, 0.94])));
+      if (closeWeight > 0) {
+        camera.getWorldDirection(cameraTarget);
+        cameraTarget.multiplyScalar(camera.position.distanceTo(follow.position)).add(camera.position);
+        const scale = DISTANCE[bucket];
+        const cos = Math.cos(follow.heading), sin = Math.sin(follow.heading);
+        closePosition.set(
+          follow.position.x + (18 * cos + 13 * sin) * scale,
+          7.5 * scale,
+          follow.position.z + (-18 * sin + 13 * cos) * scale,
+        );
+        closeTarget.set(follow.position.x + cos + 3.8 * sin, 1.8, follow.position.z - sin + 3.8 * cos);
+        camera.position.lerp(closePosition, closeWeight);
+        camera.lookAt(cameraTarget.lerp(closeTarget, closeWeight));
+      }
       /* The load, over its own scene — and the doors with it. They open ahead
          of the loader arriving and shut behind it leaving, so the pallet is
          never seen passing through a closed panel and the vehicle never drives
@@ -738,7 +681,7 @@ export const createSandboxScene: SceneFactory = ({
       const altitude = camera.position.y;
       clouds.setStrength(ramp(altitude, CLOUD_FADE));
       uplink.setStrength(ramp(altitude, UPLINK_FADE));
-      clouds.update(elapsed);
+      clouds.update(reduced ? 0 : elapsed);
       uplink.update(elapsed);
 
       const fog = scene.fog as THREE.FogExp2;
@@ -772,6 +715,7 @@ export const createSandboxScene: SceneFactory = ({
       bridge.setPalette(next);
       clouds.setPalette(next);
       station.setPalette(next);
+      driver.setPalette(next);
       uplink.setPalette(next);
       const fog = scene.fog as THREE.FogExp2;
       fog.color.copy(next.fog);
@@ -781,6 +725,7 @@ export const createSandboxScene: SceneFactory = ({
       baseFogDensity = next.fogDensity;
     },
     dispose() {
+      driver.dispose();
       carriageway.dispose();
       ground.dispose();
       forklift.dispose();

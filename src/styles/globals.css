@@ -255,3 +255,50 @@ html.lenis body {
     animation: none;
   }
 }
+
+/* The partner presentation holds its original copy over the sandbox journey. */
+.partner-journey .partner-slide {
+  padding-top: 6rem;
+  padding-bottom: 3rem;
+}
+.partner-journey .partner-slide > div {
+  max-width: 38rem;
+}
+.partner-journey .ambient-scrim {
+  background: var(--canvas);
+  opacity: .9;
+  filter: blur(32px);
+}
+.partner-journey .glass {
+  background: color-mix(in srgb, var(--canvas) 80%, transparent);
+  backdrop-filter: blur(12px);
+}
+@media (max-width: 640px) {
+  .partner-journey .partner-slide {
+    padding: 5.5rem 1.25rem 1.5rem;
+    min-height: 100svh;
+  }
+  .partner-journey .partner-slide > div > div.relative { gap: .8rem; }
+  .partner-journey h1 { font-size: clamp(1.5rem, 8vw, 2.25rem); }
+  .partner-journey h2 { font-size: 1.9rem; }
+  .partner-journey p { font-size: .95rem; }
+  .partner-journey p.font-mono { font-size: .7rem; letter-spacing: .04em; }
+  .partner-journey .glass { padding: .85rem; }
+  .partner-journey .partner-slide .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.partner-journey .scene-explanation .partner-slide {
+  align-items: flex-start;
+}
+.partner-journey .scene-explanation .partner-slide > div {
+  max-width: 28rem;
+}
+.partner-journey .scene-explanation .glass {
+  padding: 1.5rem;
+  gap: 1rem;
+}
+.partner-journey .scene-explanation .ambient-scrim { opacity: .35; }
+@media (max-width: 640px) {
+  .partner-journey .scene-explanation .glass { padding: 1.1rem; }
+  .partner-journey .scene-explanation h2 { font-size: 1.55rem; }
+}

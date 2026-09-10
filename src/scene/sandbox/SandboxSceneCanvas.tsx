@@ -1,5 +1,23 @@
 import { useSceneHost } from "../useSceneHost";
 import { createSandboxScene } from "./world";
+import { pageToScene } from "./pageProgress";
+import type { SceneFactory } from "../types";
+
+const createPageScene: SceneFactory = (context) => {
+  const instance = createSandboxScene(context);
+  let pageProgress = 0;
+  const setProgress = (next: number) => {
+    pageProgress = next;
+    instance.setProgress(pageToScene(next));
+  };
+  return {
+    ...instance, setProgress,
+    resize(width, height) {
+      instance.resize(width, height);
+      setProgress(pageProgress);
+    },
+  };
+};
 
 /**
  * The sandbox's canvas: the marketing scroll's scenario, to experiment on.
@@ -13,7 +31,7 @@ import { createSandboxScene } from "./world";
 export default function SandboxSceneCanvas({ onLost }: { onLost?: () => void }) {
   // No `ambient`: the sandbox is a scroll, and its camera has no parked
   // framing to fall back to.
-  const canvasRef = useSceneHost(createSandboxScene, { onLost });
+  const canvasRef = useSceneHost(createPageScene, { onLost });
 
   return (
     <canvas

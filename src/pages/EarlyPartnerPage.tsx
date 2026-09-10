@@ -1,18 +1,11 @@
 import { type ReactNode } from "react";
+import { SCENES, SCENE_START, type SceneContent } from "@/scene/sandbox/scenes";
 import { SplitText } from "@/motion/SplitText";
 import { useReveal } from "@/motion/useReveal";
 import { DURATION, STAGGER } from "@/motion/tokens";
 
-/* The Early Partner Program deck, presented live during a demo.
- *
- * Hungarian only and hardcoded: this is one deck shown to one room, and
- * routing it through i18n would mean maintaining an English translation nobody
- * will ever read. Every string is the original deck's, verbatim.
- *
- * What the deck had and this does not: keyboard paging, fullscreen, print, and
- * a slide rail that jumped between five absolutely-positioned <section>s. The
- * scroll is the sequencer now, and the 3D scene behind it is the reason the
- * page exists rather than the PDF. */
+/* Content is declared with the scene in sandbox/scenes.ts.
+ * This page only renders the corresponding presentation. */
 
 /** The deck's kicker label — a mono rule-and-caps line above every heading. */
 function Eyebrow({ children }: { children: ReactNode }) {
@@ -66,7 +59,7 @@ function Slide({ children }: { children: ReactNode }) {
   return (
     <section
       ref={ref}
-      className="relative flex min-h-screen w-full items-center px-8 py-24 sm:px-14 lg:px-20"
+      className="partner-slide relative flex min-h-screen w-full items-center px-8 py-24 sm:px-14 lg:px-20"
     >
       <div className="relative w-full max-w-2xl">
         {/* A pool of page colour under the copy. The scene's brightness changes
@@ -82,9 +75,21 @@ function Slide({ children }: { children: ReactNode }) {
   );
 }
 
-export function EarlyPartnerPage() {
+function SceneExplanation({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <>
+    <div className="scene-explanation">
+      <Slide>
+        <Card>
+          <h2 className="text-3xl font-semibold leading-tight tracking-tight text-fg">{title}</h2>
+          <p className="text-base leading-relaxed text-muted">{children}</p>
+        </Card>
+      </Slide>
+    </div>
+  );
+}
+
+function OpeningContent() {
+  return (
       <Slide>
         <div data-reveal className="mb-3 flex items-center gap-4">
           {/* The atlasz lettermark — the same glyph as the favicon. */}
@@ -111,77 +116,11 @@ export function EarlyPartnerPage() {
           <SplitText text="AI-alapú fuvarmenedzsment rendszer" immediate />
         </h1>
       </Slide>
+  );
+}
 
-      <Slide>
-        <Eyebrow>Bemutatkozás</Eyebrow>
-
-        <h2 className="text-3xl font-semibold leading-[1.08] tracking-tight text-fg sm:text-4xl lg:text-5xl">
-          <SplitText text="Huszka Csaba" />
-        </h2>
-
-        <p data-reveal className="max-w-prose text-lg leading-relaxed text-muted">
-          A FOLLOWTHEPATTERN alapítója és vezetője vagyok.
-        </p>
-
-        <ul
-          data-reveal
-          className="mt-1 flex list-disc flex-col gap-2 pl-5 text-base leading-relaxed text-muted marker:text-muted/50"
-        >
-          <li>Több mint egy évtizedes tapasztalat szoftverfejlesztésben</li>
-          <li>
-            A FOLLOWTHEPATTERN különböző méretű cégek számára fejleszt alkalmazásokat,
-            hogy hatékonyabbá tegye a működésüket
-          </li>
-        </ul>
-      </Slide>
-
-      <Slide>
-        <Eyebrow>A termék</Eyebrow>
-
-        <h2 className="text-3xl font-semibold leading-[1.08] tracking-tight text-fg sm:text-4xl lg:text-5xl">
-          <SplitText text="Mi az atlasz?" />
-        </h2>
-
-        <p data-reveal className="max-w-prose text-lg italic leading-relaxed text-muted">
-          „Adjon kollégáinak AI-alapú szuperképességeket.”
-        </p>
-
-        <p data-reveal className="max-w-prose text-lg font-semibold leading-relaxed text-fg">
-          AI-alapú fuvarmenedzsment rendszer, ami felgyorsítja a munkavégzést.
-        </p>
-
-        <div className="mt-1 grid grid-cols-2 gap-3">
-          <Card>
-            <span className="text-sm font-semibold text-fg">Számlázás</span>
-          </Card>
-          <Card>
-            <span className="text-sm font-semibold text-fg">
-              Automatikus dokumentum kezelés
-            </span>
-          </Card>
-          <Card>
-            <span className="text-sm font-semibold text-fg">AI automatizáció</span>
-          </Card>
-          <Card>
-            <span className="text-sm font-semibold text-fg">
-              Átlátható, modern felület
-            </span>
-          </Card>
-        </div>
-
-        <Footnote>A részleteket nem diákon mutatjuk — hanem élőben.</Footnote>
-      </Slide>
-
-      {/* The spoken beat. In the deck this slide was a cue to stop talking and
-          open the app; here the scene carries the pause. */}
-      <Slide>
-        <Eyebrow>Következik</Eyebrow>
-
-        <h2 className="text-4xl font-semibold leading-[1.06] tracking-tight text-fg sm:text-5xl lg:text-6xl">
-          <SplitText text="Élő bemutató." />
-        </h2>
-      </Slide>
-
+function PartnerProgramContent() {
+  return (
       <Slide>
         <Eyebrow>Együttműködés</Eyebrow>
 
@@ -218,6 +157,29 @@ export function EarlyPartnerPage() {
           amelyet a bemutató után elküldünk.
         </Footnote>
       </Slide>
-    </>
+  );
+}
+
+function ScenePresentation({ content }: { content: SceneContent }) {
+  switch (content.kind) {
+    case "opening": return <OpeningContent />;
+    case "partner-program": return <PartnerProgramContent />;
+    case "explanation": return <SceneExplanation title={content.title}>{content.body}</SceneExplanation>;
+    case "none": return null;
+  }
+}
+
+export function EarlyPartnerPage() {
+  return (
+    <main className="partner-journey relative" lang="hu" aria-label="Early Partner Program">
+      {SCENES.map((scene, index) => (
+        <section key={scene.name} data-scene-start={SCENE_START[index]}
+          style={{ minHeight: `${scene.span * (5800 / 2.325)}vh` }}>
+          {scene.content.kind !== "none" && (
+            <div className="sticky top-0"><ScenePresentation content={scene.content} /></div>
+          )}
+        </section>
+      ))}
+    </main>
   );
 }

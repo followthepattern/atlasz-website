@@ -54,7 +54,7 @@ export function proceduralStation(palette: ScenePalette): Station {
   addBox([CANOPY.length, 0.3, 0.12], [0, CANOPY_HEIGHT - 0.42, 4 - CANOPY.depth / 2],
     accent, edge);
 
-  for (const x of [-CANOPY.length / 2 + 1.4, CANOPY.length / 2 - 1.4]) {
+  for (const x of [-CANOPY.length / 2 + 0.3, CANOPY.length / 2 - 0.3]) {
     for (const z of [4 - CANOPY.depth / 2 + 1.4, 4 + CANOPY.depth / 2 - 1.4]) {
       addBox([0.55, CANOPY_HEIGHT - 0.3, 0.55], [x, (CANOPY_HEIGHT - 0.3) / 2, z],
         fill, edgeDim);
@@ -68,6 +68,14 @@ export function proceduralStation(palette: ScenePalette): Station {
     // Pump body, and the reader panel facing the road.
     addBox([1.0, 2.1, 0.9], [x, 1.27, PUMP_ISLAND.z], fill, edge);
     addBox([0.62, 0.5, 0.06], [x, 1.86, PUMP_ISLAND.z + 0.48], accent, edgeDim);
+    const hosePath = new THREE.CatmullRomCurve3([
+      new THREE.Vector3(x + 0.48, 2.2, PUMP_ISLAND.z),
+      new THREE.Vector3(x + 0.9, 1.6, PUMP_ISLAND.z - 0.3),
+      new THREE.Vector3(x + 0.8, 0.55, PUMP_ISLAND.z - 0.5),
+      new THREE.Vector3(x + 0.55, 0.65, PUMP_ISLAND.z - 0.5),
+      new THREE.Vector3(x + 0.5, 1.5, PUMP_ISLAND.z - 0.5),
+    ]);
+    group.add(new THREE.Mesh(new THREE.TubeGeometry(hosePath, 20, 0.035, 5, false), accent));
     // The hose gantry over it.
     addBox([0.12, 0.7, 0.12], [x + 0.42, 2.62, PUMP_ISLAND.z], fill, edgeDim);
   }
@@ -79,6 +87,15 @@ export function proceduralStation(palette: ScenePalette): Station {
   addBox([9.4, 0.25, 6.4], [-1, 3.72, 13.5], fill, edgeDim); // roof lip
   for (const x of [-3.6, -1, 1.6]) {
     addBox([1.7, 1.6, 0.08], [x, 1.9, 10.46], accent, edgeDim); // windows
+  }
+
+  // Storage tanks beside the shop, clear of the driver's path and pump island.
+  for (const x of [6.2, 9]) {
+    const geometry = new THREE.CylinderGeometry(0.95, 0.95, 3.6, 20);
+    geometry.rotateX(Math.PI / 2);
+    geometry.translate(x, 1.4, 13.5);
+    group.add(new THREE.Mesh(geometry, fill), edgesFor(geometry, edge));
+    for (const z of [12.3, 14.7]) addBox([1.8, 0.5, 0.35], [x, 0.25, z], fill, edgeDim);
   }
 
   return {

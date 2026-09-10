@@ -1,11 +1,11 @@
 import * as THREE from "three";
 import { panelFill, edgeMaterial, lineSegments } from "../../materials";
-import { ROUTE, headingAt } from "../../road";
+import { ROUTE, headingAt } from "../road";
 import type { ScenePalette } from "../../palette";
 
 /* The road itself.
  *
- * ROUTE has been the authority on this scene's layout from the beginning —
+ * The sandbox ROUTE is the authority on this scene's layout from the beginning —
  * every vehicle, tree, building and camera is placed along it — and until now
  * nothing has drawn it. The truck has been driving down an invisible line on a
  * wireframe floor, which reads as a model on a table rather than as a journey.
@@ -20,10 +20,10 @@ const HALF_WIDTH = 4.8;
 /** How far outside the surface the verge line runs. */
 const VERGE = 1.6;
 
-/* Samples along the curve. The route is ~380m, so this puts a cross-section
+/* Samples along the curve. The route is ~1150m, so this puts a cross-section
    about every 1.4m — fine enough that the bends read as curves rather than as
    a chain of straights, and cheap enough to be one draw call. */
-const SAMPLES = 280;
+const SAMPLES = 840;
 
 /** Lifted clear of the grid, which sits at y=0 and would otherwise z-fight. */
 const SURFACE_Y = 0.06;
@@ -62,21 +62,22 @@ export function proceduralCarriageway(palette: ScenePalette): Carriageway {
   const edges: number[] = [];
   const verges: number[] = [];
   const dashes: number[] = [];
+  const banks: number[] = [];
 
   /* Every cross-section the road is built from: a straight run-out, the route
      itself, then another straight run-out. Assembled first so the strip below
      does not care which part of the road it is bridging. */
-  const centres: { x: number; z: number; heading: number }[] = [];
+  const centres: { x: number; y: number; z: number; heading: number }[] = [];
 
   const runout = (t: 0 | 1, direction: -1 | 1) => {
     const end = ROUTE.getPointAt(t);
     const tangent = ROUTE.getTangentAt(t);
     const heading = headingAt(t);
     const steps = Math.round(RUNOUT / RUNOUT_STEP);
-    const out: { x: number; z: number; heading: number }[] = [];
+    const out: { x: number; y: number; z: number; heading: number }[] = [];
     for (let i = 1; i <= steps; i += 1) {
       const d = (i / steps) * RUNOUT * direction;
-      out.push({ x: end.x + tangent.x * d, z: end.z + tangent.z * d, heading });
+      out.push({ x: end.x + tangent.x * d, y: end.y, z: end.z + tangent.z * d, heading });
     }
     return out;
   };
@@ -86,11 +87,11 @@ export function proceduralCarriageway(palette: ScenePalette): Carriageway {
   for (let i = 0; i <= SAMPLES; i += 1) {
     const t = i / SAMPLES;
     const point = ROUTE.getPointAt(t);
-    centres.push({ x: point.x, z: point.z, heading: headingAt(t) });
+    centres.push({ x: point.x, y: point.y, z: point.z, heading: headingAt(t) });
   }
   centres.push(...runout(1, 1));
 
-  let previous: { lx: number; lz: number; rx: number; rz: number } | null = null;
+  let previous: { lx: number; lz: number; rx: number; rz: number; y: number } | null = null;
 
   for (let i = 0; i < centres.length; i += 1) {
     const point = centres[i];
@@ -101,6 +102,7 @@ export function proceduralCarriageway(palette: ScenePalette): Carriageway {
     const sz = Math.cos(heading);
 
     const current = {
+      y: point.y + SURFACE_Y,
       lx: point.x + sx * HALF_WIDTH,
       lz: point.z + sz * HALF_WIDTH,
       rx: point.x - sx * HALF_WIDTH,
@@ -112,22 +114,33 @@ export function proceduralCarriageway(palette: ScenePalette): Carriageway {
       const p = previous;
       // Two triangles bridging this cross-section and the last.
       positions.push(
-        p.lx, SURFACE_Y, p.lz, p.rx, SURFACE_Y, p.rz, lx, SURFACE_Y, lz,
-        p.rx, SURFACE_Y, p.rz, rx, SURFACE_Y, rz, lx, SURFACE_Y, lz,
+        p.lx, p.y, p.lz, p.rx, p.y, p.rz, lx, current.y, lz,
+        p.rx, p.y, p.rz, rx, current.y, rz, lx, current.y, lz,
       );
-      edges.push(p.lx, SURFACE_Y, p.lz, lx, SURFACE_Y, lz);
-      edges.push(p.rx, SURFACE_Y, p.rz, rx, SURFACE_Y, rz);
+      edges.push(p.lx, p.y, p.lz, lx, current.y, lz);
+      edges.push(p.rx, p.y, p.rz, rx, current.y, rz);
 
+      if (p.y > .07 || current.y > .07) {
+        for (const side of [-1, 1]) {
+          const ax = side > 0 ? p.lx : p.rx, az = side > 0 ? p.lz : p.rz;
+          const bx = side > 0 ? lx : rx, bz = side > 0 ? lz : rz;
+          const reach = 16;
+          const psx = (p.lx - p.rx) / (HALF_WIDTH * 2);
+          const psz = (p.lz - p.rz) / (HALF_WIDTH * 2);
+          banks.push(ax,p.y-.03,az, ax+psx*side*reach,0,az+psz*side*reach, bx,current.y-.03,bz,
+            bx,current.y-.03,bz, ax+psx*side*reach,0,az+psz*side*reach, bx+sx*side*reach,0,bz+sz*side*reach);
+        }
+      }
       // Verge markers a little outside the tarmac, which is most of what gives
       // the eye a sense of speed when the camera is low and close.
       const vl = HALF_WIDTH + VERGE;
       verges.push(
-        point.x + sx * vl, SURFACE_Y, point.z + sz * vl,
-        point.x + sx * (vl + 0.9), SURFACE_Y, point.z + sz * (vl + 0.9),
+        point.x + sx * vl, point.y * .9 + SURFACE_Y, point.z + sz * vl,
+        point.x + sx * (vl + 0.9), point.y * .84375 + SURFACE_Y, point.z + sz * (vl + 0.9),
       );
       verges.push(
-        point.x - sx * vl, SURFACE_Y, point.z - sz * vl,
-        point.x - sx * (vl + 0.9), SURFACE_Y, point.z - sz * (vl + 0.9),
+        point.x - sx * vl, point.y * .9 + SURFACE_Y, point.z - sz * vl,
+        point.x - sx * (vl + 0.9), point.y * .84375 + SURFACE_Y, point.z - sz * (vl + 0.9),
       );
 
       /* Centre line, dashed: four samples on, two off. Drawn from the curve
@@ -135,8 +148,8 @@ export function proceduralCarriageway(palette: ScenePalette): Carriageway {
          Longer marks than gaps, which is what a real carriageway runs and what
          gives the eye something to measure speed against. */
       if (i % 6 < 4) {
-        dashes.push(p.lx * 0 + (p.lx + p.rx) / 2, SURFACE_Y, (p.lz + p.rz) / 2);
-        dashes.push((current.lx + current.rx) / 2, SURFACE_Y, (current.lz + current.rz) / 2);
+        dashes.push(p.lx * 0 + (p.lx + p.rx) / 2, p.y, (p.lz + p.rz) / 2);
+        dashes.push((current.lx + current.rx) / 2, current.y, (current.lz + current.rz) / 2);
       }
     }
 
@@ -147,6 +160,11 @@ export function proceduralCarriageway(palette: ScenePalette): Carriageway {
   geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
   geometry.computeVertexNormals();
   group.add(new THREE.Mesh(geometry, surface));
+  const bankGeometry = new THREE.BufferGeometry();
+  bankGeometry.setAttribute('position', new THREE.Float32BufferAttribute(banks, 3));
+  const bankMaterial = panelFill(palette); bankMaterial.side = THREE.DoubleSide;
+  materials.push(bankMaterial);
+  group.add(new THREE.Mesh(bankGeometry, bankMaterial));
 
   group.add(lineSegments(edges, edge));
   group.add(lineSegments(dashes, edge));
@@ -156,6 +174,8 @@ export function proceduralCarriageway(palette: ScenePalette): Carriageway {
     object3D: group,
 
     setPalette(next) {
+      bankMaterial.color.copy(next.fill);
+      bankMaterial.opacity = next.fillOpacity;
       surface.color.copy(next.fill);
       surface.opacity = next.fillOpacity;
       edge.color.copy(next.line);

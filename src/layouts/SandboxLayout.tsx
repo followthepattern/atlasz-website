@@ -1,8 +1,12 @@
 import { useEffect, useState } from "react";
+import { JourneyNavigation } from "@/components/JourneyNavigation";
 import { Outlet } from "react-router-dom";
 import { SandboxScene } from "@/scene/sandbox/SandboxScene";
 import { useScrollStore } from "@/motion/ScrollProvider";
-import { SCENES, sceneAt } from "@/scene/sandbox/scenes";
+import { SCENES, sceneAt, within } from "@/scene/sandbox/scenes";
+
+import { fuelStopPose } from "@/scene/sandbox/fuelStop";
+import { pageToScene, sceneToPage } from "@/scene/sandbox/pageProgress";
 
 const TITLE = "atlasz — sandbox";
 
@@ -20,12 +24,29 @@ function Readout() {
   const store = useScrollStore();
   const [progress, setProgress] = useState(0);
 
-  useEffect(() => store.subscribe(setProgress), [store]);
+  useEffect(() => store.subscribe((next) => setProgress(pageToScene(next))), [store]);
 
   const scene = sceneAt(progress);
   const pad = (n: number) => String(n).padStart(2, "0");
 
+  const seek = (at: number) => {
+    store.scrollTo(sceneToPage(at) * (document.documentElement.scrollHeight - window.innerHeight), 0);
+  };
   return (
+    <>
+    <details className="fixed bottom-4 right-4 z-20 w-[min(24rem,calc(100vw-2rem))] rounded-xl border border-fg/10 bg-canvas/95 p-4 text-fg shadow-lg">
+      <summary className="cursor-pointer text-xs text-muted">Sandbox preview · Scene controls</summary>
+      <p className="mt-3 text-sm">{scene.index === 5 ? fuelStopPose(scene.local).phase : scene.name}</p>
+      <label className="mt-3 block text-xs text-muted" htmlFor="scene-progress">Scrub the journey</label>
+      <input id="scene-progress" type="range" min="0" max="1000" value={Math.round(progress * 1000)} onChange={(event) => seek(Number(event.target.value) / 1000)} className="mt-2 w-full accent-current" />
+      <div className="mt-3 flex flex-wrap gap-2">
+        {SCENES.map((s, i) => <button key={s.name} onClick={() => seek(within(i, i === 0 ? 0 : 0.5))} className="rounded border border-fg/15 px-2 py-1 text-xs hover:bg-fg/10">{s.name}</button>)}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {([['Step out', 0.37], ['Walk out', 0.445], ['Pumps', 0.53], ['Walk back', 0.64], ['Aboard', 0.77]] as const).map(([label, at]) => <button key={label} onClick={() => seek(within(5, at))} className="rounded border border-fg/15 px-2 py-1 text-xs hover:bg-fg/10">{label}</button>)}
+      </div>
+      <p className="mt-3 text-xs text-muted">Arrows play to the next or previous scene at a steady pace. Scroll to take over.</p>
+    </details>
     <div className="pointer-events-none fixed bottom-6 left-6 z-20 font-mono text-[0.7rem] leading-relaxed tracking-[0.08em] text-muted/70">
       <div className="text-fg">
         scene {pad(scene.number)} / {pad(scene.count)} · {scene.name}
@@ -54,6 +75,7 @@ function Readout() {
         ))}
       </div>
     </div>
+    </>
   );
 }
 
@@ -89,6 +111,7 @@ export function SandboxLayout() {
     <div className="flex min-h-full flex-col">
       <SandboxScene />
       <Outlet />
+      <JourneyNavigation />
       <Readout />
     </div>
   );

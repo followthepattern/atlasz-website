@@ -5,6 +5,7 @@ import { MarketingLayout } from "@/layouts/MarketingLayout";
 import { FunnelLayout } from "@/layouts/FunnelLayout";
 import { DocumentLayout } from "@/layouts/DocumentLayout";
 import { DeckLayout } from "@/layouts/DeckLayout";
+import { EarlyPartnerLayout } from "@/layouts/EarlyPartnerLayout";
 import { SandboxLayout } from "@/layouts/SandboxLayout";
 import { LandingPage } from "@/pages/LandingPage";
 import { SubscribePage } from "@/pages/SubscribePage";
@@ -58,6 +59,10 @@ export const routes: RouteObject[] = [
       {
         element: <DeckLayout />,
         children: [{ path: "early-partner", element: <EarlyPartnerPage /> }],
+      },
+      {
+        element: <EarlyPartnerLayout />,
+        children: [{ path: "earlypartner", element: <EarlyPartnerPage /> }],
       },
       {
         element: <SandboxLayout />,

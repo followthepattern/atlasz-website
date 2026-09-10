@@ -146,7 +146,7 @@ function arcSegments(
   return points;
 }
 
-export type SandboxTruck = SceneAsset & { setDoors(open: number): void };
+export type SandboxTruck = SceneAsset & { setDoors(open: number): void; setDriverDoor(open: number): void };
 
 export function proceduralTruck(palette: ScenePalette): SandboxTruck {
   const group = new THREE.Group();
@@ -326,10 +326,15 @@ export function proceduralTruck(palette: ScenePalette): SandboxTruck {
   }
   facePanel(0.72, 0.3, 0.09, 0.04, [FACE + 0.22, 0.66, 0], fill, edgeDim);
 
+  const driverDoor = new THREE.Group();
+  driverDoor.position.set(2.46, 0, HALF_W + 0.035);
+  group.add(driverDoor);
+
   // --- Cab sides ---------------------------------------------------------
   for (const z of [HALF_W + 0.005, -(HALF_W + 0.005)]) {
     const sign = Math.sign(z);
 
+    const sideStart = group.children.length;
     addPlane([1.02, 0.8], [1.92, 2.76, z], "z"); // door window
     addPlane([0.44, 0.38], [2.34, 1.88, z], "z"); // low vision window
 
@@ -343,16 +348,30 @@ export function proceduralTruck(palette: ScenePalette): SandboxTruck {
           0.52, 3.3, z, 2.46, 3.3, z,
           // handle
           0.72, 2.24, z, 1.02, 2.24, z,
-          // swage line running the length of the cab
-          0.1, 1.52, z, 2.5, 1.52, z,
-          // entry steps below the door
-          0.66, 1.02, z, 1.16, 1.02, z,
-          0.7, 0.72, z, 1.2, 0.72, z,
-          0.74, 0.42, z, 1.24, 0.42, z,
         ],
         edgeDim,
       ),
     );
+
+    if (sign > 0) {
+      const panels = group.children.slice(sideStart);
+      const panel = new THREE.Mesh(new THREE.BoxGeometry(1.94, 2.8, 0.05), fill);
+      panel.position.set(-0.97, 1.9, 0);
+      driverDoor.add(panel, ...panels);
+      for (const detail of panels) {
+        detail.position.sub(driverDoor.position);
+        detail.position.z += 0.07;
+      }
+      const recess = new THREE.Mesh(new THREE.PlaneGeometry(1.92, 2.75), glass);
+      recess.position.set(1.49, 1.9, HALF_W + 0.012);
+      group.add(recess);
+    }
+    group.add(lineSegments([
+      0.1, 1.52, z, 2.5, 1.52, z,
+      0.66, 1.02, z, 1.16, 1.02, z,
+      0.7, 0.72, z, 1.2, 0.72, z,
+      0.74, 0.42, z, 1.24, 0.42, z,
+    ], edgeDim));
 
     // Front wheel arch.
     group.add(
@@ -502,6 +521,7 @@ export function proceduralTruck(palette: ScenePalette): SandboxTruck {
     object3D: group,
 
     /** 0 shut, 1 open. Driven by whatever scene is loading the vehicle. */
+    setDriverDoor(open) { driverDoor.rotation.y = Math.max(0, Math.min(1, open)) * 1.75; },
     setDoors(open: number) {
       const t = Math.min(1, Math.max(0, open));
       for (const { hinge, side } of doors) hinge.rotation.y = side * DOOR_OPEN * t;
