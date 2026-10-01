@@ -14,7 +14,7 @@ export function Footer() {
     <footer className="mx-auto w-full max-w-5xl px-6 py-12">
       <div className="flex flex-col gap-8 border-t border-hairline pt-10 sm:flex-row sm:justify-between">
         <div className="flex max-w-xs flex-col gap-2">
-          <span className="text-lg font-semibold tracking-tight text-fg">atlasz</span>
+          <span className="text-lg font-semibold tracking-tight text-fg">ATLASZ</span>
           <Text className="text-xs">{t("footer.tagline")}</Text>
         </div>
 

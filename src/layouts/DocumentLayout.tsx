@@ -20,7 +20,7 @@ export function DocumentLayout() {
           to="/"
           className="text-lg font-semibold tracking-tight text-fg hover:opacity-80"
         >
-          atlasz
+          ATLASZ
         </Link>
         <Link to="/" className="text-xs text-muted hover:text-fg">
           {t("privacy.back")}
@@ -33,7 +33,7 @@ export function DocumentLayout() {
 
       <footer className="mx-auto w-full max-w-3xl px-6 py-8">
         <div className="flex flex-col gap-2 border-t border-hairline pt-6">
-          <Subheading className="text-sm">atlasz</Subheading>
+          <Subheading className="text-sm">ATLASZ</Subheading>
           <Text className="text-xs">
             {t("footer.rights", { year: new Date().getFullYear() })}
           </Text>

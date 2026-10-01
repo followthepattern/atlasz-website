@@ -17,7 +17,7 @@ export function FunnelLayout() {
           to="/"
           className="text-lg font-semibold tracking-tight text-fg hover:opacity-80"
         >
-          atlasz
+          ATLASZ
         </Link>
         <LanguageSwitcher />
       </header>

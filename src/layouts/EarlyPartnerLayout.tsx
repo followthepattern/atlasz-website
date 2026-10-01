@@ -8,7 +8,7 @@ export function EarlyPartnerLayout() {
   useEffect(() => {
     const previousTitle = document.title;
     const previousLang = document.documentElement.lang;
-    document.title = "atlasz — Early Partner Program";
+    document.title = "ATLASZ — Early Partner Program";
     document.documentElement.lang = "hu";
     const robots = document.createElement("meta");
     robots.name = "robots";

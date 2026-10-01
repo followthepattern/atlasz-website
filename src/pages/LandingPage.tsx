@@ -181,7 +181,7 @@ export function LandingPage() {
           </div>
         </Stage>
         <Stage
-          id="atlasz-bot"
+          id="ATLASZ-bot"
           at={within(6, 0.75)}
           title={
             i18n.resolvedLanguage === "hu"

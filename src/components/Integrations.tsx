@@ -74,11 +74,10 @@ function CenterNode({ compact = false }: { compact?: boolean }) {
   return (
     <div
       data-integration-node="center"
-      className={`glass flex flex-col items-center justify-center rounded-lg text-center ${
-        compact ? "min-h-32 px-6 py-7" : "h-44 w-44"
-      }`}
+      className={`glass flex flex-col items-center justify-center rounded-lg text-center ${compact ? "min-h-32 px-6 py-7" : "h-44 w-44"
+        }`}
     >
-      <span className="text-2xl font-semibold tracking-tight text-fg">atlasz</span>
+      <span className="text-2xl font-semibold tracking-tight text-fg">ATLASZ</span>
       <span className="mt-2 text-[11px] font-medium uppercase tracking-wide text-muted">
         AI TMS
       </span>

@@ -38,7 +38,7 @@ export function Hero() {
           to="/"
           className="text-lg font-semibold tracking-tight text-fg hover:opacity-80"
         >
-          atlasz
+          ATLASZ
         </Link>
         <LanguageSwitcher />
       </header>

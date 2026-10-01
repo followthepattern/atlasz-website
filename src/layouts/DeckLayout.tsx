@@ -7,7 +7,7 @@ import { useScrollStore } from "@/motion/ScrollProvider";
    measures scroll position, and the sections it counts all live on one page. */
 const SECTIONS = 5;
 
-const TITLE = "atlasz — Early Partner Program";
+const TITLE = "ATLASZ — Early Partner Program";
 
 /** Scroll position as `01 / 05`, with a hairline fill. A presenter's aid. */
 function ProgressRail() {

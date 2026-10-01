@@ -90,73 +90,73 @@ function SceneExplanation({ title, children }: { title: string; children: ReactN
 
 function OpeningContent() {
   return (
-      <Slide>
-        <div data-reveal className="mb-3 flex items-center gap-4">
-          {/* The atlasz lettermark — the same glyph as the favicon. */}
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-hairline bg-black">
-            <svg viewBox="0 0 1024 1024" className="h-7 w-7" aria-hidden="true">
-              <g
-                fill="none"
-                stroke="#ffffff"
-                strokeWidth="132"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M250 800 L512 250 L774 800" />
-                <line x1="383" y1="660" x2="641" y2="660" />
-              </g>
-            </svg>
-          </span>
-          <span className="text-xl font-semibold tracking-tight text-fg">atlasz</span>
-        </div>
+    <Slide>
+      <div data-reveal className="mb-3 flex items-center gap-4">
+        {/* The ATLASZ lettermark — the same glyph as the favicon. */}
+        <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-hairline bg-black">
+          <svg viewBox="0 0 1024 1024" className="h-7 w-7" aria-hidden="true">
+            <g
+              fill="none"
+              stroke="#ffffff"
+              strokeWidth="132"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M250 800 L512 250 L774 800" />
+              <line x1="383" y1="660" x2="641" y2="660" />
+            </g>
+          </svg>
+        </span>
+        <span className="text-xl font-semibold tracking-tight text-fg">ATLASZ</span>
+      </div>
 
-        <Eyebrow>Atlasz Demo · 2026</Eyebrow>
+      <Eyebrow>Atlasz Demo · 2026</Eyebrow>
 
-        <h1 className="text-4xl font-semibold leading-[1.06] tracking-tight text-fg sm:text-5xl lg:text-6xl">
-          <SplitText text="AI-alapú fuvarmenedzsment rendszer" immediate />
-        </h1>
-      </Slide>
+      <h1 className="text-4xl font-semibold leading-[1.06] tracking-tight text-fg sm:text-5xl lg:text-6xl">
+        <SplitText text="AI-alapú fuvarmenedzsment rendszer" immediate />
+      </h1>
+    </Slide>
   );
 }
 
 function PartnerProgramContent() {
   return (
-      <Slide>
-        <Eyebrow>Együttműködés</Eyebrow>
+    <Slide>
+      <Eyebrow>Együttműködés</Eyebrow>
 
-        <h2 className="text-3xl font-semibold leading-[1.08] tracking-tight text-fg sm:text-4xl lg:text-5xl">
-          <SplitText text="Early Partner Program" />
-        </h2>
+      <h2 className="text-3xl font-semibold leading-[1.08] tracking-tight text-fg sm:text-4xl lg:text-5xl">
+        <SplitText text="Early Partner Program" />
+      </h2>
 
-        <p data-reveal className="max-w-prose text-lg leading-relaxed text-muted">
-          Ha az atlaszban lát potenciált, örömmel dolgoznánk együtt az első
-          partnereink egyikeként.
-        </p>
+      <p data-reveal className="max-w-prose text-lg leading-relaxed text-muted">
+        Ha az ATLASZban lát potenciált, örömmel dolgoznánk együtt az első
+        partnereink egyikeként.
+      </p>
 
-        <div className="mt-1 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <Card title="Mit várunk?">
-            <ul className="flex list-disc flex-col gap-1 pl-4 text-sm leading-relaxed text-muted marker:text-muted/50">
-              <li>Aktív használat</li>
-              <li>Kijelölt kapcsolattartó</li>
-              <li>Rendszeres visszajelzés</li>
-              <li>Közös egyeztetések</li>
-            </ul>
-          </Card>
-          <Card title="Mit biztosítunk?">
-            <ul className="flex list-disc flex-col gap-1 pl-4 text-sm leading-relaxed text-muted marker:text-muted/50">
-              <li>Early Access</li>
-              <li>Kiemelt támogatás</li>
-              <li>Közvetlen kapcsolat a fejlesztőkkel</li>
-              <li>Kedvezményes partneri feltételek</li>
-            </ul>
-          </Card>
-        </div>
+      <div className="mt-1 grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <Card title="Mit várunk?">
+          <ul className="flex list-disc flex-col gap-1 pl-4 text-sm leading-relaxed text-muted marker:text-muted/50">
+            <li>Aktív használat</li>
+            <li>Kijelölt kapcsolattartó</li>
+            <li>Rendszeres visszajelzés</li>
+            <li>Közös egyeztetések</li>
+          </ul>
+        </Card>
+        <Card title="Mit biztosítunk?">
+          <ul className="flex list-disc flex-col gap-1 pl-4 text-sm leading-relaxed text-muted marker:text-muted/50">
+            <li>Early Access</li>
+            <li>Kiemelt támogatás</li>
+            <li>Közvetlen kapcsolat a fejlesztőkkel</li>
+            <li>Kedvezményes partneri feltételek</li>
+          </ul>
+        </Card>
+      </div>
 
-        <Footnote>
-          A részletes feltételeket az Early Partner Program szerződése tartalmazza,
-          amelyet a bemutató után elküldünk.
-        </Footnote>
-      </Slide>
+      <Footnote>
+        A részletes feltételeket az Early Partner Program szerződése tartalmazza,
+        amelyet a bemutató után elküldünk.
+      </Footnote>
+    </Slide>
   );
 }
 

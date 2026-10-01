@@ -4,7 +4,7 @@ import { useScrollStore } from "@/motion/ScrollProvider";
 import { decimal } from "@/i18n/format";
 
 /* Figures the card reports as the truck runs the route. A demonstration of
-   what atlasz tracks, not live data. */
+   what ATLASZ tracks, not live data. */
 const TANK_FULL = 82;
 const TANK_ON_ARRIVAL = 43;
 const CONSUMPTION_FROM = 27.6;
