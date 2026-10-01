@@ -9,7 +9,7 @@ const SandboxSceneCanvas = lazy(() => import("./SandboxSceneCanvas"));
  * What SandboxLayout renders: the gradient base layer, and the turntable over
  * it when the GPU can carry one.
  */
-export function SandboxScene() {
+export function SandboxScene({ marketplace = false }: { marketplace?: boolean }) {
   const { show, onLost } = useSceneGate();
 
   return (
@@ -17,7 +17,7 @@ export function SandboxScene() {
       <div className="scene-backdrop" aria-hidden="true" />
       {show ? (
         <Suspense fallback={null}>
-          <SandboxSceneCanvas onLost={onLost} />
+          <SandboxSceneCanvas onLost={onLost} marketplace={marketplace} />
         </Suspense>
       ) : null}
     </>

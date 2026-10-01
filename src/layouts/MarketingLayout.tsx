@@ -1,21 +1,34 @@
+import { useEffect, useRef } from "react";
 import { Outlet } from "react-router-dom";
-import { TruckOverlay } from "@/components/TruckOverlay";
-import { Footer } from "@/components/Footer";
+import { SandboxScene } from "@/scene/sandbox/SandboxScene";
+import { useScrollStore } from "@/motion/ScrollProvider";
+import { useDocumentMeta } from "@/i18n/useDocumentMeta";
 
-/**
- * The scroll-driven marketing pages: full-bleed, with the scene's own readouts
- * floating over it.
- *
- * The readouts belong here rather than to the scene because they only make
- * sense over a page whose scroll drives the truck — parked in an ambient
- * framing they would be describing a journey that is not happening.
- */
 export function MarketingLayout() {
+  useDocumentMeta();
+  const scroll = useScrollStore();
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const hero = ref.current?.querySelector(".journey-hero");
+    if (!hero) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (ref.current)
+        ref.current.dataset.touring = String(!entry.isIntersecting);
+    });
+    observer.observe(hero);
+    const arrival = ref.current?.querySelector(".journey-arrival");
+    const stopArrival = scroll.subscribe(() => {
+      if (ref.current && arrival) {
+        // Do not resize the mobile canvas while the service scene is still active.
+        ref.current.dataset.arrived = String(arrival.getBoundingClientRect().top <= 0);
+      }
+    });
+    return () => { observer.disconnect(); stopArrival(); };
+  }, [scroll]);
   return (
-    <div className="flex min-h-full flex-col">
-      <TruckOverlay />
+    <div ref={ref} className="landing-journey">
+      <SandboxScene marketplace />
       <Outlet />
-      <Footer />
     </div>
   );
 }

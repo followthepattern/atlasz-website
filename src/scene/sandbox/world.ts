@@ -1,3 +1,5 @@
+import { createPartnerSign } from "./assets/partnerSign";
+import { createOrderPosts } from "./assets/orderPosts";
 import * as THREE from "three";
 import { disposeObject } from "../materials";
 import { proceduralTruck } from "./assets/truck";
@@ -166,9 +168,13 @@ const offsetBy =
 function buildFramings(
   anchors: Record<string, THREE.Vector3>,
   distance: number,
+  partnerArrival = false,
 ): Framing[] {
   const trailer = anchors.trailer ?? new THREE.Vector3(-7.4, 2.5, 0);
   const from = offsetBy(distance);
+  // Keep the phone climb intact; give wide screens the same above-cloud altitude.
+  const mobileOpening = partnerArrival && distance === DISTANCE.xs;
+  const uplinkHeight = (height: number) => height * Math.max(1, 2.5 / distance);
   const orbit = (anchor: THREE.Vector3, radius: number, height: number, degrees: number) => {
     const angle = THREE.MathUtils.degToRad(degrees);
     return from(anchor, radius * Math.cos(angle), height, radius * Math.sin(angle));
@@ -188,8 +194,10 @@ function buildFramings(
      * axis is clear of the bodywork at any of these bearings. */
     {
       at: within(0, 0),
-      offset: from(trailer, 1.7, 1.2, 31),
-      lookOffset: from(trailer, 1.7, 4.8, 0),
+      // The phone camera sits 77.5m from the road, inside the rising hillside
+      // at the desktop opening height. Lift only the landing's mobile opening.
+      offset: from(trailer, 1.7, mobileOpening ? 12 : 1.2, mobileOpening ? 35 : 31),
+      lookOffset: from(trailer, mobileOpening ? .5 : 1.7, 4.8, 0),
     },
     {
       at: within(0, 0.5),
@@ -312,7 +320,7 @@ function buildFramings(
      * the cloud fade and the fog both work off where the camera actually is. */
     {
       at: within(4, 0.2),
-      offset: from(trailer, 49.17, 150, 13.82), // 18.3° absolute, into the deck
+      offset: from(trailer, 49.17, uplinkHeight(150), 13.82), // 18.3° absolute, into the deck
       lookOffset: trailer.clone(),
     },
 
@@ -332,12 +340,12 @@ function buildFramings(
      * running on the beams that wants watching. */
     {
       at: within(4, 0.35),
-      offset: from(trailer, 41.58, 330, 11.3), // 18.3° absolute, on station
+      offset: from(trailer, 41.58, uplinkHeight(330), 11.3), // 18.3° absolute, on station
       lookOffset: trailer.clone(),
     },
     {
       at: within(4, 0.7),
-      offset: from(trailer, 38.73, 345, 10.36), // 18.3° absolute, held
+      offset: from(trailer, 38.73, uplinkHeight(345), 10.36), // 18.3° absolute, held
       lookOffset: trailer.clone(),
     },
 
@@ -442,19 +450,19 @@ function buildFramings(
      * in the buildings the truck has arrived at. */
     {
       at: within(7, 1),
-      offset: orbit(trailer, 54, 21, -44),
-      lookOffset: from(trailer, 4, 0, 10),
+      offset: partnerArrival ? orbit(trailer, 72, 26, -44) : orbit(trailer, 54, 21, -44),
+      lookOffset: partnerArrival ? trailer.clone().add(new THREE.Vector3(8, 3, 16)) : from(trailer, 4, 0, 10),
     },
   ];
 }
 
-export const createSandboxScene: SceneFactory = ({
+export const createSandboxScene = ({
   palette,
   quality,
   aspect,
   screen,
   reduced,
-}: SceneContext): SceneInstance => {
+}: SceneContext, options: { marketplace?: boolean } = {}): SceneInstance => {
   const scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(palette.fog.getHex(), palette.fogDensity);
 
@@ -499,18 +507,23 @@ export const createSandboxScene: SceneFactory = ({
   factory.object3D.position.x -= 11;
   scene.add(factory.object3D);
 
-  const trees = proceduralTrees(
-    palette,
-    // Leave the frontage clear where the facility meets the road.
-    [
+  const treeLocations = [
       ...treePlacements({ from: 0.02, to: 0.94, clearings: [[WAREHOUSE_AT, 0.025], [STATION_AT, 0.025]] }),
       ...treePlacements({ from: 0.035, to: 0.94, verge: 36, spread: 10, seed: 0x71ee, clearings: [[WAREHOUSE_AT, 0.03], [STATION_AT, 0.028]] }),
     ].filter(({ position }) =>
       !(position.x < ROUTE.getPointAt(TRUCK_FROM).x - 18 && position.x > ROUTE.getPointAt(TRUCK_FROM).x - 70 && position.z < 2 && position.z > -30) &&
       Math.abs(Math.cos(riverHeading) * (position.x - riverPosition.x) - Math.sin(riverHeading) * (position.z - riverPosition.z)) > 25,
-    ),
-  );
+    );
+  const trees = proceduralTrees(palette, treeLocations);
   scene.add(trees.object3D);
+  const orderPosts = options.marketplace ? createOrderPosts(
+    // Keep every listing beyond the station, including the nearest tree anchor.
+    treeLocations.filter(tree => tree.position.x > ROUTE.getPointAt(STATION_AT).x + 35),
+    ROUTE.getPointAt(STATION_AT).x + 35,
+    ROUTE.getPointAt(routeAt(within(6, .65))).x,
+    palette,
+  ) : null;
+  if (orderPosts) scene.add(orderPosts.object3D);
 
   /* The forecourt, and the person. Placed on the route like the warehouse, so
      neither knows where it stands — only how far along and how far aside. */
@@ -555,6 +568,8 @@ export const createSandboxScene: SceneFactory = ({
   // Turn the dock to face the carriageway the truck arrives on.
   warehouse.object3D.rotation.y += Math.PI / 2;
   scene.add(warehouse.object3D);
+  const partnerSign = options.marketplace ? createPartnerSign(palette) : null;
+  if (partnerSign) warehouse.object3D.add(partnerSign.object3D);
 
   /* The deck sits in world space and stays put — it is weather, not scenery
      belonging to the vehicle. The uplink is the opposite: built in the truck's
@@ -597,7 +612,7 @@ export const createSandboxScene: SceneFactory = ({
   const rig = createCameraRig(
     camera,
     follow,
-    buildFramings(truck.anchorPoints, DISTANCE[bucket]),
+    buildFramings(truck.anchorPoints, DISTANCE[bucket], options.marketplace),
     { reduced, label: "sandbox" },
   );
   rig.setProgress(0);
@@ -619,6 +634,13 @@ export const createSandboxScene: SceneFactory = ({
     },
     update(elapsed, delta) {
       driveTo(progress);
+      const marketProgress = (progress - SCENE_START[6]) / SCENE_SPAN[6];
+      // Wait until the entire truck has left the forecourt before revealing listings.
+      const metresPastStation = (routeAt(progress) - STATION_AT) * ROUTE.getLength();
+      const marketStrength = smoothstep(ramp(metresPastStation, [60, 75]))
+        * smoothstep(ramp(marketProgress, [0, .08]))
+        * (1 - smoothstep(ramp(marketProgress, [.55, .72])));
+      orderPosts?.update(elapsed, marketStrength, reduced, document.documentElement.lang);
       // Distance-driven wheels stop with scrolling, reverse when rewinding,
       // and stay still throughout both loading and the driver walk.
       const route = routeAt(progress);
@@ -704,10 +726,12 @@ export const createSandboxScene: SceneFactory = ({
       const next = screenSize();
       if (next !== bucket) {
         bucket = next;
-        rig.setFramings(buildFramings(truck.anchorPoints, DISTANCE[bucket]));
+        rig.setFramings(buildFramings(truck.anchorPoints, DISTANCE[bucket], options.marketplace));
       }
     },
     setPalette(next) {
+      orderPosts?.setPalette(next);
+      partnerSign?.setPalette(next);
       for (const asset of assets) asset.setPalette(next);
       carriageway.setPalette(next);
       ground.setPalette(next);
@@ -725,6 +749,8 @@ export const createSandboxScene: SceneFactory = ({
       baseFogDensity = next.fogDensity;
     },
     dispose() {
+      orderPosts?.dispose();
+      partnerSign?.dispose();
       driver.dispose();
       carriageway.dispose();
       ground.dispose();

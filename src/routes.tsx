@@ -37,13 +37,10 @@ export const routes: RouteObject[] = [
   {
     element: <RootLayout />,
     children: [
+      { element: <MarketingLayout />, children: [{ index: true, element: <LandingPage /> }] },
       {
         element: <SiteLayout />,
         children: [
-          {
-            element: <MarketingLayout />,
-            children: [{ index: true, element: <LandingPage /> }],
-          },
           {
             element: <FunnelLayout />,
             handle: ambient,

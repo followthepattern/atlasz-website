@@ -59,17 +59,19 @@ export function useSceneHost(createScene: SceneFactory, options: SceneHostOption
       return;
     }
 
+    const dimensions = () => ({ width: canvas.clientWidth || window.innerWidth, height: canvas.clientHeight || window.innerHeight });
+    const initialSize = dimensions();
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, quality.maxDpr));
-    renderer.setSize(window.innerWidth, window.innerHeight, false);
+    renderer.setSize(initialSize.width, initialSize.height, false);
 
     const instance = createScene({
       palette: paletteForDocument(),
       quality,
-      aspect: window.innerWidth / window.innerHeight,
+      aspect: initialSize.width / initialSize.height,
       screen: screenSize(),
       reduced,
     });
-    instance.resize(window.innerWidth, window.innerHeight);
+    instance.resize(initialSize.width, initialSize.height);
 
     const stopTheme = observeTheme((next) => instance.setPalette(next));
 
@@ -79,10 +81,13 @@ export function useSceneHost(createScene: SceneFactory, options: SceneHostOption
 
     const onResize = () => {
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, quality.maxDpr));
-      renderer.setSize(window.innerWidth, window.innerHeight, false);
-      instance.resize(window.innerWidth, window.innerHeight);
+      const { width, height } = dimensions();
+      renderer.setSize(width, height, false);
+      instance.resize(width, height);
     };
     window.addEventListener("resize", onResize);
+    const sizeObserver = new ResizeObserver(onResize);
+    sizeObserver.observe(canvas);
 
     // A permanently mounted canvas rendering at 60fps forever is a laptop
     // killer. Stop entirely while the tab is hidden.
@@ -152,6 +157,7 @@ export function useSceneHost(createScene: SceneFactory, options: SceneHostOption
       gsap.killTweensOf(canvas);
       canvas.style.opacity = "1";
       window.removeEventListener("resize", onResize);
+      sizeObserver.disconnect();
       document.removeEventListener("visibilitychange", onVisibility);
       canvas.removeEventListener("webglcontextlost", onContextLost);
       unsubscribe();

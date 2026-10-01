@@ -1,10 +1,11 @@
+import { useMemo } from "react";
 import { useSceneHost } from "../useSceneHost";
 import { createSandboxScene } from "./world";
 import { pageToScene } from "./pageProgress";
 import type { SceneFactory } from "../types";
 
-const createPageScene: SceneFactory = (context) => {
-  const instance = createSandboxScene(context);
+const pageScene = (marketplace: boolean): SceneFactory => (context) => {
+  const instance = createSandboxScene(context, { marketplace });
   let pageProgress = 0;
   const setProgress = (next: number) => {
     pageProgress = next;
@@ -28,7 +29,8 @@ const createPageScene: SceneFactory = (context) => {
  * that this chunk, which is the one that will churn, is fetched by nobody
  * except whoever opens the lab.
  */
-export default function SandboxSceneCanvas({ onLost }: { onLost?: () => void }) {
+export default function SandboxSceneCanvas({ onLost, marketplace = false }: { onLost?: () => void; marketplace?: boolean }) {
+  const createPageScene = useMemo(() => pageScene(marketplace), [marketplace]);
   // No `ambient`: the sandbox is a scroll, and its camera has no parked
   // framing to fall back to.
   const canvasRef = useSceneHost(createPageScene, { onLost });
