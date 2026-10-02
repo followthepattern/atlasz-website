@@ -402,7 +402,7 @@ html.lenis body {
   .journey-stage { min-height: 170svh; }
   .journey-short { min-height: 130svh; }
   .journey-sticky { align-items: end; padding: 0 14px 16px; }
-  .journey-card { width: 100%; padding: 18px; max-height: 54svh; overflow-y: auto; overscroll-behavior: contain; }
+  .journey-card { width: 100%; flex-shrink: 0; padding: 18px; height: 54svh; min-height: 54svh; max-height: 54svh; overflow-y: auto; overscroll-behavior-y: auto; overflow-anchor: none; }
   .journey-card h2 { font-size: 25px; }
   .journey-description { font-size: 12px; margin-top: 8px; }
   .journey-demo-slot { margin-top: 14px; }
@@ -495,7 +495,7 @@ html.lenis body {
   .bot-reference-body small, .bot-reference-status { font-size: 7px; }.bot-reference-body strong { font-size: 9px; }.bot-reference-body b { font-size: 15px; }
   .bot-sync-result { margin-top: 7px; padding: 8px; gap: 6px; }.bot-sync-result strong { font-size: 8px; }.bot-sync-result small { font-size: 7px; }
   .bot-demo-controls { margin-top: 5px; font-size: 8px; }
-  .journey-bot-stage .journey-card { max-height: 32svh; }
+  .journey-bot-stage .journey-card { height: 32svh; min-height: 32svh; max-height: 32svh; }
 }
 @media (prefers-reduced-motion: reduce) { .bot-reference-window, .bot-form-fields > div > div { transition: none; } }
 
