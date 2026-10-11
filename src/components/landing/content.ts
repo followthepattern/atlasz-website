@@ -1,6 +1,6 @@
 export const copy = {
   en: {
-    hero: "The AI-powered TMS ecosystem for transport companies.",
+    hero: "ATLASZ is the agentic TMS ecosystem.",
     pillars: "Operations. Fleet. Finance. Data. Intelligence.",
     intro:
       "Bring your entire transport operation into one connected ecosystem — from the first transport order to invoicing, analytics, and decision-making.",
@@ -104,7 +104,7 @@ export const copy = {
     complete: "Transport completed",
   },
   hu: {
-    hero: "AI-alapú TMS ökoszisztéma fuvarozó vállalatoknak.",
+    hero: "Az ATLASZ egy AI alapú fuvarszervezést automatizáló platform.",
     pillars: "Operáció. Flotta. Pénzügy. Adatok. Intelligencia.",
     intro:
       "A teljes fuvarozási működés egy összekapcsolt ökoszisztémában — az első megbízástól a számlázáson át az elemzésig és a döntéshozatalig.",
