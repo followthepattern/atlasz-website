@@ -1,14 +1,14 @@
 export const copy = {
   en: {
-    hero: "ATLASZ is the agentic TMS ecosystem.",
+    hero: "The Intelligent Operating System for Your Transportation Business.",
     pillars: "Operations. Fleet. Finance. Data. Intelligence.",
     intro:
-      "Bring your entire transport operation into one connected ecosystem — from the first transport order to invoicing, analytics, and decision-making.",
+      "Bring your entire transport operation into one connected platform — from the first transport order to invoicing, analytics, and decision-making.",
     cta: "Take ATLASZ for a test drive",
     scroll: "Scroll to follow the journey",
     demo: "Interactive preview · Example data",
     chapters: [
-      "The ecosystem",
+      "The platform",
       "Capture data",
       "Organize operations",
       "Costs & spot pricing",
@@ -104,15 +104,15 @@ export const copy = {
     complete: "Transport completed",
   },
   hu: {
-    hero: "Az ATLASZ egy AI alapú fuvarszervezést automatizáló platform.",
+    hero: "Intelligens Operációs Rendszer a Fuvarozó Vállalkozásodnak.",
     pillars: "Operáció. Flotta. Pénzügy. Adatok. Intelligencia.",
     intro:
-      "A teljes fuvarozási működés egy összekapcsolt ökoszisztémában — az első megbízástól a számlázáson át az elemzésig és a döntéshozatalig.",
+      "A teljes fuvarozási működés egy összekapcsolt felületen — az első megbízástól a számlázáson át az elemzésig és a döntéshozatalig.",
     cta: "Próbálja ki az ATLASZ-t",
     scroll: "Görgessen végig az úton",
     demo: "Interaktív bemutató · Példaadatok",
     chapters: [
-      "Ökoszisztéma",
+      "Felület",
       "Adatgyűjtés",
       "Fuvarszervezés",
       "Költségek és spot árak",
